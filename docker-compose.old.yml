@@ -1,0 +1,79 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: pgvector-db
+    restart: always
+    env_file:
+      - environment/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ragobs_pgdata:/var/lib/postgresql/data
+      - ./backend/old_core/init.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - rag_network
+
+
+
+  old-core:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend/old_core
+    env_file:
+      - environment/.env
+    ports:
+      - "5000:5000"
+    expose:
+      - 5000
+    volumes:
+      - ./backend/old_core/obsidian:/obsidian
+      - ./vaults:/app/vaults
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - rag_network
+  
+  old-ui:
+    build:
+      context: ./frontend/old_ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_APPLICATION_MODE=dev
+        - VITE_API_BASE_URL=https://shkityrk.ru
+    container_name: frontend_app
+    env_file:
+      - environment/.env
+    command: npm run build
+    volumes:
+      - ./frontend/old_ui:/app
+      - /app/node_modules
+    depends_on:
+      - old-core
+    networks:
+      - rag_network
+  
+  nginx:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/old_ui/dist:/usr/share/nginx/html
+      - ./environment/certificate.key:/etc/nginx/certificate.key:ro
+      - ./environment/server.crt:/etc/nginx/server.crt:ro
+    networks:
+      - rag_network
+
+
+
+volumes:
+  ragobs_pgdata:
+
+networks:
+  rag_network:
+    driver: bridge

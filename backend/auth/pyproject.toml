@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "auth"
+version = "0.1.0"
+description = ""
+authors = ["Shkityrk <shkityr.k@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = ">=0.115.12,<0.116.0"
+uvicorn = ">=0.34.2,<0.35.0"
+sqlalchemy = ">=2.0.40,<2.1.0"
+psycopg2-binary = ">=2.9.10,<3.0.0"
+python-jose = ">=3.4.0,<3.5.0"
+python-multipart = ">=0.0.20,<0.0.21"
+passlib = { extras = ["bcrypt"], version = ">=1.7.4,<1.8.0" }
+pydantic = { extras = ["email"], version = ">=2.11.3,<3.0.0" }
+bcrypt = "==4.0.1"
+python-dotenv = ">=1.1.0,<2.0.0"
+starlette = ">=0.46.2,<0.47.0"
+alembic = ">=1.15.2,<1.16.0"
+requests = ">=2.32.0,<3.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

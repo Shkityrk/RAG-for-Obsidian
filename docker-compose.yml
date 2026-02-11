@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:13
+    env_file:
+      - environment/.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - rag_network
+
+  minio:
+    image: minio/minio:latest
+    env_file:
+      - environment/.env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - rag_network
+
+
+  auth:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend/auth
+    env_file:
+      - environment/.env
+    depends_on:
+      - db
+    ports:
+      - "8002:8002"
+    networks:
+      - rag_network
+
+  file_core:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend/file_checker
+    env_file:
+      - environment/.env
+    depends_on:
+      - db
+      - minio
+    ports:
+      - "8003:8003"
+    networks:
+      - rag_network
+
+  gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend/gateway
+    env_file:
+      - environment/.env
+    depends_on:
+      - auth
+      - file_core
+    ports:
+      - "8001:8001"
+    networks:
+      - rag_network
+
+
+volumes:
+  db_data:
+  minio_data:
+
+networks:
+  rag_network:
+    driver: bridge

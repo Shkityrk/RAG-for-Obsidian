@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+ARG VITE_APPLICATION_MODE
+ARG VITE_API_BASE_URL
+
+ENV VITE_APPLICATION_MODE=${VITE_APPLICATION_MODE}
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "run", "build"]

@@ -1,0 +1,58 @@
+:root {
+  /* Obsidian-inspired color palette */
+  --obsidian-bg: #1e1e1e;
+  --obsidian-bg-secondary: #252525;
+  --obsidian-text: #dcddde;
+  --obsidian-text-secondary: #a0a0a0;
+  --obsidian-text-muted: #72767d;
+  --obsidian-border: #40444b;
+  --obsidian-accent: #4a9eff;
+  --obsidian-accent-hover: #5aa5ff;
+  
+  /* ChatGPT-inspired colors */
+  --chatgpt-bg: #343541;
+  --chatgpt-bg-secondary: #40414f;
+  --chatgpt-text: #ececf1;
+  --chatgpt-text-secondary: #c5c5d2;
+  
+  /* Combined palette */
+  --bg-primary: var(--obsidian-bg);
+  --bg-secondary: var(--obsidian-bg-secondary);
+  --text-primary: var(--obsidian-text);
+  --text-secondary: var(--obsidian-text-secondary);
+  --text-muted: var(--obsidian-text-muted);
+  --border-color: var(--obsidian-border);
+  --accent: var(--obsidian-accent);
+  --accent-hover: var(--obsidian-accent-hover);
+  
+  /* Message colors */
+  --user-message-bg: #10a37f;
+  --assistant-message-bg: var(--chatgpt-bg-secondary);
+}
+
+[data-mantine-color-scheme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f8;
+  --text-primary: #353740;
+  --text-secondary: #6e6e80;
+  --text-muted: #8e8ea0;
+  --border-color: #e5e5e6;
+  --assistant-message-bg: #f7f7f8;
+  --user-message-bg: #10a37f;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

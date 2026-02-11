@@ -1,0 +1,18 @@
+[project]
+name = "file-core"
+version = "0.1.0"
+description = "File ingestion core service"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12,<0.116.0",
+    "uvicorn>=0.34.2,<0.35.0",
+    "sqlalchemy>=2.0.40,<2.1.0",
+    "psycopg2-binary>=2.9.10,<3.0.0",
+    "minio>=7.2.10,<8.0.0",
+    "python-jose>=3.4.0,<3.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+

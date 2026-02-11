@@ -1,0 +1,221 @@
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+}
+
+/* Sidebar с чатами - Desktop */
+.chat-sidebar {
+    width: 250px;
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.chat-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Правая панель с информацией - Desktop */
+.chat-info-sidebar {
+    width: 320px;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.chat-info-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-info-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-info-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.chat-info-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Основная область чата */
+.chat-main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mobile header */
+.chat-mobile-header {
+    display: none;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+}
+
+.chat-messages-wrapper {
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 0;
+    max-width: 768px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.chat-messages-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages-area::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.chat-messages-area::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.chat-document-viewer-desktop {
+    flex: 0 0 40%;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.chat-document-viewer-mobile {
+    display: none;
+}
+
+.chat-input-container {
+    max-width: 768px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px 24px 24px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Мобильные стили */
+@media (max-width: 1024px) {
+    .chat-info-sidebar {
+        width: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-sidebar,
+    .chat-info-sidebar {
+        display: none;
+    }
+
+    .chat-mobile-header {
+        display: flex;
+    }
+
+    .chat-messages-area {
+        padding: 20px 0;
+    }
+
+    .chat-input-container {
+        padding: 12px 16px 16px;
+    }
+
+    .chat-document-viewer-desktop {
+        display: none;
+    }
+
+    .chat-document-viewer-mobile {
+        display: block;
+    }
+
+    .chat-messages-wrapper {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-mobile-header {
+        padding: 10px 12px;
+    }
+
+    .chat-messages-area {
+        padding: 16px 0;
+    }
+
+    .chat-input-container {
+        padding: 10px 12px 12px;
+    }
+
+    /* Уменьшаем размер кнопок на мобильных */
+    .chat-input-container .mantine-ActionIcon-root {
+        min-width: 36px;
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Улучшаем отступы для полей ввода на мобильных */
+    .chat-input-container .mantine-Textarea-input {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 360px) {
+    .chat-mobile-header {
+        padding: 8px 10px;
+    }
+
+    .chat-mobile-header .mantine-Text-root {
+        font-size: 13px;
+    }
+
+    .chat-input-container {
+        padding: 8px 10px 10px;
+    }
+}
+
