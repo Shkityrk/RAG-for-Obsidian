@@ -34,18 +34,50 @@ export class GatewayClient {
 			headers.Authorization = `Bearer ${token}`;
 		}
 
-		const response = await requestUrl({
-			url: `${this.getBaseUrl().replace(/\/+$/u, "")}${path}`,
-			method: "POST",
-			headers,
-			body: JSON.stringify(payload),
-		});
-		if (response.status >= 400) {
-			const errorBody = response.json as HttpErrorPayload | null;
-			const detail = errorBody?.detail ?? errorBody?.message ?? response.text;
-			throw new Error(`Gateway ${path} failed (${response.status}): ${detail}`);
+		const baseUrl = this.getBaseUrl().replace(/\/+$/u, "");
+		const fullUrl = `${baseUrl}${path}`;
+
+		try {
+			const response = await requestUrl({
+				url: fullUrl,
+				method: "POST",
+				headers,
+				body: JSON.stringify(payload),
+			});
+
+			if (response.status >= 400) {
+				let errorBody: HttpErrorPayload | null = null;
+				try {
+					errorBody = response.json as HttpErrorPayload | null;
+				} catch {
+					// Если не JSON, используем text
+				}
+				const detail = errorBody?.detail ?? errorBody?.message ?? response.text ?? "Unknown error";
+				
+				if (response.status === 401) {
+					throw new Error(`Неверное имя пользователя или пароль (${response.status})`);
+				}
+				if (response.status === 403) {
+					throw new Error(`Доступ запрещен (${response.status}): ${detail}`);
+				}
+				if (response.status === 404) {
+					throw new Error(`Эндпоинт не найден: ${path} (${response.status})`);
+				}
+				if (response.status === 400) {
+					throw new Error(`Ошибка валидации (${response.status}): ${detail}`);
+				}
+				if (response.status >= 500) {
+					throw new Error(`Ошибка сервера (${response.status}): ${detail}`);
+				}
+				throw new Error(`${detail} (${response.status})`);
+			}
+			return response.json as TResponse;
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				throw error;
+			}
+			throw new Error(`Network error: не удалось подключиться к ${baseUrl}`);
 		}
-		return response.json as TResponse;
 	}
 }
 

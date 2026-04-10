@@ -23,6 +23,16 @@ services:
     networks:
       - rag_network
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - rag_network
+
 
   auth:
     build:
@@ -46,8 +56,24 @@ services:
     depends_on:
       - db
       - minio
+      - core
     ports:
       - "8003:8003"
+    networks:
+      - rag_network
+
+  core:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./backend/core
+    env_file:
+      - environment/.env
+    depends_on:
+      - db
+      - minio
+      - qdrant
+    ports:
+      - "8005:8005"
     networks:
       - rag_network
 
@@ -64,11 +90,46 @@ services:
       - "8001:8001"
     networks:
       - rag_network
+  
+  ui:
+    build:
+      context: ./client/ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_APPLICATION_MODE=dev
+        - VITE_API_BASE_URL=http://localhost
+    container_name: frontend_app
+    env_file:
+      - environment/.env
+    command: npm run build
+    volumes:
+      - ./client/ui:/app
+      - /app/node_modules
+    depends_on:
+      - core
+    networks:
+      - rag_network
+
+  nginx:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./client/ui/dist:/usr/share/nginx/html
+      - ./environment/certificate.key:/etc/nginx/certificate.key:ro
+      - ./environment/server.crt:/etc/nginx/server.crt:ro
+    networks:
+      - rag_network
 
 
 volumes:
   db_data:
   minio_data:
+  qdrant_data:
 
 networks:
   rag_network:

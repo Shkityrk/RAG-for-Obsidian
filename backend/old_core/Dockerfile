@@ -8,7 +8,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     POETRY_VERSION=1.5.1
 
-RUN pip install "poetry==$POETRY_VERSION"
+RUN pip install uv
 
 WORKDIR /app
 
@@ -16,11 +16,11 @@ WORKDIR /app
 #    build-essential \
 #    && rm -rf /var/lib/apt/lists/*
 
-COPY poetry.lock pyproject.toml /app/
+COPY uv.lock pyproject.toml /app/
 
-RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
+RUN uv sync --no-dev
 
 COPY src /app/src
 
 
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "5000", "--timeout-keep-alive", "600", "--timeout-graceful-shutdown", "600"]
+CMD ["uv", "run", "python", "-m", "src", "--host", "0.0.0.0", "--port", "5000", "--timeout-keep-alive", "600", "--timeout-graceful-shutdown", "600"]

@@ -37,7 +37,7 @@ services:
   
   old-ui:
     build:
-      context: ./frontend/old_ui
+      context: ./client/old_ui
       dockerfile: Dockerfile
       args:
         - VITE_APPLICATION_MODE=dev
@@ -47,7 +47,7 @@ services:
       - environment/.env
     command: npm run build
     volumes:
-      - ./frontend/old_ui:/app
+      - ./client/old_ui:/app
       - /app/node_modules
     depends_on:
       - old-core

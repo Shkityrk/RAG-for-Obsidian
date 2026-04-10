@@ -28,5 +28,8 @@ export interface GatewayFileEventPayload {
 	content?: string;
 	sha256?: string;
 	timestamp: string;
+	is_media?: boolean;
+	media_content_base64?: string;
+	media_content_type?: string;
 }
 

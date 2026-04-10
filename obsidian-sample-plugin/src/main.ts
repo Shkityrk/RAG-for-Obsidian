@@ -60,6 +60,13 @@ export default class VaultGatewaySyncPlugin extends Plugin {
 				new Notice("Gateway token cleared");
 			},
 		});
+		this.addCommand({
+			id: "gateway-sync-all",
+			name: "Sync all files (initial sync)",
+			callback: async () => {
+				await this.syncAllFiles();
+			},
+		});
 	}
 
 	private async tryLoginWithNotice(showSuccessNotice: boolean): Promise<void> {
@@ -103,5 +110,74 @@ export default class VaultGatewaySyncPlugin extends Plugin {
 		const state = this.settings.syncEnabled ? "on" : "off";
 		const token = this.settings.accessToken ? "token" : "no-token";
 		this.statusBarText.setText(`gateway sync: ${state} (${token})`);
+	}
+
+	async testLogin(): Promise<void> {
+		try {
+			if (!this.settings.username || !this.settings.password) {
+				new Notice("❌ Ошибка: Логин или пароль не заполнены");
+				return;
+			}
+			if (!this.settings.gatewayUrl) {
+				new Notice("❌ Ошибка: адрес сервера не указан");
+				return;
+			}
+
+			const auth = await this.gatewayClient.login({
+				username: this.settings.username,
+				password: this.settings.password,
+			});
+
+			this.settings.accessToken = auth.access_token;
+			await this.saveSettings();
+			new Notice(`✅ Вход успешный! Пользователь: ${auth.user.username}`);
+		} catch (error: unknown) {
+			const message = this.getErrorMessage(error);
+			if (message.includes("401") || message.includes("Неверное") || message.includes("неверное")) {
+				new Notice("❌ Неправильные данные: неверный логин или пароль");
+			} else if (message.includes("Network") || message.includes("fetch") || message.includes("ECONNREFUSED")) {
+				new Notice(`❌ Ошибка подключения: не удалось подключиться к ${this.settings.gatewayUrl}`);
+			} else {
+				new Notice(`❌ Ошибка входа: ${message}`);
+			}
+		}
+	}
+
+	async syncAllFiles(): Promise<void> {
+		try {
+			if (!this.settings.syncEnabled) {
+				new Notice("⚠️ Синхронизация отключена в настройках");
+				return;
+			}
+
+			new Notice("🔄 Начало синхронизации всех файлов...");
+			this.updateStatusBar("sync: scanning files...");
+
+			const token = await this.ensureAuthenticated();
+			const result = await this.syncService.syncAllFiles(token);
+
+			if (result.success === 0 && result.errors > 0) {
+				new Notice(`❌ Синхронизация завершена с ошибками: ${result.errors} ошибок, ${result.success} успешно`);
+			} else if (result.errors > 0) {
+				new Notice(`⚠️ Синхронизация завершена: ${result.success} успешно, ${result.errors} ошибок`);
+			} else {
+				new Notice(`✅ Синхронизация завершена: ${result.success} файлов успешно загружено`);
+			}
+			this.updateStatusBar();
+		} catch (error: unknown) {
+			const message = this.getErrorMessage(error);
+			new Notice(`❌ Ошибка синхронизации: ${message}`);
+			this.updateStatusBar();
+		}
+	}
+
+	private getErrorMessage(error: unknown): string {
+		if (error instanceof Error) {
+			return error.message;
+		}
+		if (typeof error === "string") {
+			return error;
+		}
+		return "Неизвестная ошибка";
 	}
 }

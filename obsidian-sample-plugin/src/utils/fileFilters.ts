@@ -1,5 +1,6 @@
 const TEMP_FILE_RE = /(^|\/)(~\$|\.~|tmp-|temp-)|\.(tmp|temp|swp|swo|bak|crdownload)$/iu;
-const BINARY_EXTENSIONS = new Set<string>([
+
+const MEDIA_IMAGE_EXTENSIONS = new Set<string>([
 	"png",
 	"jpg",
 	"jpeg",
@@ -7,7 +8,15 @@ const BINARY_EXTENSIONS = new Set<string>([
 	"webp",
 	"bmp",
 	"ico",
+	"svg",
+]);
+
+const MEDIA_EXTENSIONS = new Set<string>([
+	...MEDIA_IMAGE_EXTENSIONS,
 	"pdf",
+]);
+
+const OTHER_BINARY_EXTENSIONS = new Set<string>([
 	"zip",
 	"7z",
 	"rar",
@@ -40,12 +49,30 @@ export function isMarkdownPath(path: string): boolean {
 	return path.toLowerCase().endsWith(".md");
 }
 
-export function isBinaryPath(path: string): boolean {
+export function isMediaPath(path: string): boolean {
 	const ext = path.split(".").pop()?.toLowerCase() ?? "";
-	return ext.length > 0 && BINARY_EXTENSIONS.has(ext);
+	return ext.length > 0 && MEDIA_EXTENSIONS.has(ext);
+}
+
+export function isImagePath(path: string): boolean {
+	const ext = path.split(".").pop()?.toLowerCase() ?? "";
+	return ext.length > 0 && MEDIA_IMAGE_EXTENSIONS.has(ext);
+}
+
+export function isPdfPath(path: string): boolean {
+	return path.toLowerCase().endsWith(".pdf");
+}
+
+export function isOtherBinaryPath(path: string): boolean {
+	const ext = path.split(".").pop()?.toLowerCase() ?? "";
+	return ext.length > 0 && OTHER_BINARY_EXTENSIONS.has(ext);
 }
 
 export function shouldSkipPath(path: string, configDir: string): boolean {
-	return isIgnoredVaultPath(path, configDir) || isTempPath(path) || isBinaryPath(path);
+	return (
+		isIgnoredVaultPath(path, configDir) ||
+		isTempPath(path) ||
+		(!isMarkdownPath(path) && !isMediaPath(path) && isOtherBinaryPath(path))
+	);
 }
 

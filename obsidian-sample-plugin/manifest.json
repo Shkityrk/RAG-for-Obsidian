@@ -1,0 +1,9 @@
+{
+	"id": "obsidian-sample-plugin",
+	"name": "Vault Gateway Sync",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Synchronizes markdown vault file events to gateway/file_core backend.",
+	"author": "RAG for Obsidian",
+	"isDesktopOnly": false
+}

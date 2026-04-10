@@ -72,6 +72,25 @@ export class SyncSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Test login")
+			.setDesc("Проверить вход с текущими логином и паролем")
+			.addButton((button) =>
+				button
+					.setButtonText("Проверить вход")
+					.setCta()
+					.onClick(async () => {
+						button.setButtonText("Проверка...");
+						button.setDisabled(true);
+						try {
+							await this.plugin.testLogin();
+						} finally {
+							button.setButtonText("Проверить вход");
+							button.setDisabled(false);
+						}
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName("Enable sync")
 			.setDesc("Включить отправку событий create/modify/delete/rename в gateway")
 			.addToggle((toggle) =>
