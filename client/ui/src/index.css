@@ -1,58 +1,212 @@
 :root {
-  /* Obsidian-inspired color palette */
-  --obsidian-bg: #1e1e1e;
-  --obsidian-bg-secondary: #252525;
-  --obsidian-text: #dcddde;
-  --obsidian-text-secondary: #a0a0a0;
-  --obsidian-text-muted: #72767d;
-  --obsidian-border: #40444b;
-  --obsidian-accent: #4a9eff;
-  --obsidian-accent-hover: #5aa5ff;
-  
-  /* ChatGPT-inspired colors */
-  --chatgpt-bg: #343541;
-  --chatgpt-bg-secondary: #40414f;
-  --chatgpt-text: #ececf1;
-  --chatgpt-text-secondary: #c5c5d2;
-  
-  /* Combined palette */
-  --bg-primary: var(--obsidian-bg);
-  --bg-secondary: var(--obsidian-bg-secondary);
-  --text-primary: var(--obsidian-text);
-  --text-secondary: var(--obsidian-text-secondary);
-  --text-muted: var(--obsidian-text-muted);
-  --border-color: var(--obsidian-border);
-  --accent: var(--obsidian-accent);
-  --accent-hover: var(--obsidian-accent-hover);
-  
-  /* Message colors */
-  --user-message-bg: #10a37f;
-  --assistant-message-bg: var(--chatgpt-bg-secondary);
+  --bg-primary: #f4f7fb;
+  --bg-secondary: #ffffff;
+  --bg-elevated: #f9fbff;
+  --surface-soft: #f1f5fb;
+  --surface-glass: rgba(255, 255, 255, 0.84);
+  --text-primary: #13213a;
+  --text-secondary: #4d5e7d;
+  --text-muted: #7989a6;
+  --border-color: #d8e0ef;
+  --border-strong: #c4d2ea;
+  --accent: #ff0032;
+  --accent-hover: #d5002b;
+  --accent-soft: #ffe8ed;
+  --secondary-accent: #2b7cff;
+  --secondary-accent-hover: #1f66de;
+  --control-bg: #ffffff;
+  --control-bg-hover: #f7faff;
+  --control-border: #cad7ee;
+  --control-border-focus: #7ca9ff;
+  --control-text: #142648;
+  --focus-ring: 0 0 0 4px rgba(43, 124, 255, 0.16);
+  --user-message-bg: #ff0032;
+  --assistant-message-bg: #f8fbff;
+  --panel-shadow: 0 10px 28px rgba(14, 37, 76, 0.08);
+  --card-shadow: 0 6px 16px rgba(16, 40, 85, 0.08);
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 6px;
 }
 
 [data-mantine-color-scheme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f8;
-  --text-primary: #353740;
-  --text-secondary: #6e6e80;
-  --text-muted: #8e8ea0;
-  --border-color: #e5e5e6;
-  --assistant-message-bg: #f7f7f8;
-  --user-message-bg: #10a37f;
+  --bg-primary: #f4f7fb;
+  --bg-secondary: #ffffff;
+  --bg-elevated: #f9fbff;
+  --surface-soft: #f1f5fb;
+  --surface-glass: rgba(255, 255, 255, 0.84);
+  --text-primary: #13213a;
+  --text-secondary: #4d5e7d;
+  --text-muted: #7989a6;
+  --border-color: #d8e0ef;
+  --border-strong: #c4d2ea;
+  --accent: #ff0032;
+  --accent-hover: #d5002b;
+  --accent-soft: #ffe8ed;
+  --secondary-accent: #2b7cff;
+  --secondary-accent-hover: #1f66de;
+  --control-bg: #ffffff;
+  --control-bg-hover: #f7faff;
+  --control-border: #cad7ee;
+  --control-border-focus: #7ca9ff;
+  --control-text: #142648;
+  --focus-ring: 0 0 0 4px rgba(43, 124, 255, 0.16);
+  --assistant-message-bg: #f8fbff;
+  --user-message-bg: #ff0032;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --bg-primary: #0c1322;
+  --bg-secondary: #131d32;
+  --bg-elevated: #192843;
+  --surface-soft: #1e2f4f;
+  --surface-glass: rgba(19, 29, 50, 0.88);
+  --text-primary: #eaf1ff;
+  --text-secondary: #a8badc;
+  --text-muted: #7e94b8;
+  --border-color: #2d456f;
+  --border-strong: #3a5788;
+  --accent: #ff476d;
+  --accent-hover: #ff6685;
+  --accent-soft: rgba(255, 71, 109, 0.16);
+  --secondary-accent: #68a2ff;
+  --secondary-accent-hover: #8cb9ff;
+  --control-bg: #1a2945;
+  --control-bg-hover: #203457;
+  --control-border: #3b5685;
+  --control-border-focus: #7fb0ff;
+  --control-text: #e7efff;
+  --focus-ring: 0 0 0 4px rgba(104, 162, 255, 0.22);
+  --assistant-message-bg: #162741;
+  --user-message-bg: #ff476d;
+  --panel-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  --card-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
-  background-color: var(--bg-primary);
+  background: var(--bg-primary);
   color: var(--text-primary);
 }
 
+[data-mantine-color-scheme="dark"] #root {
+  background: var(--bg-primary);
+}
+
 body {
-  background-color: var(--bg-primary);
+  background-color: transparent;
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.6;
+  font-family: "Manrope", "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", sans-serif;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.mantine-Button-root {
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.mantine-Button-root[data-variant="filled"] {
+  background: var(--accent);
+  box-shadow: 0 10px 20px rgba(255, 0, 50, 0.22);
+}
+
+.mantine-Button-root[data-variant="filled"]:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.mantine-Button-root[data-variant="light"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(255, 0, 50, 0.22);
+}
+
+.mantine-Button-root[data-variant="light"]:hover {
+  background: rgba(255, 0, 50, 0.2);
+}
+
+.mantine-ActionIcon-root {
+  border-radius: var(--radius-sm);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.mantine-ActionIcon-root:hover {
+  transform: translateY(-1px);
+}
+
+.mantine-ActionIcon-root[data-variant="filled"] {
+  background: var(--accent);
+}
+
+.mantine-ActionIcon-root[data-variant="light"] {
+  background: color-mix(in srgb, var(--secondary-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--secondary-accent) 35%, transparent);
+  color: var(--secondary-accent);
+}
+
+.mantine-Input-input,
+.mantine-Textarea-input,
+.mantine-Select-input,
+.mantine-NumberInput-input {
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.mantine-Input-input::placeholder,
+.mantine-Textarea-input::placeholder,
+.mantine-Select-input::placeholder,
+.mantine-NumberInput-input::placeholder {
+  color: var(--text-muted);
+}
+
+.mantine-Input-input:hover,
+.mantine-Textarea-input:hover,
+.mantine-Select-input:hover,
+.mantine-NumberInput-input:hover {
+  background: var(--control-bg-hover);
+}
+
+.mantine-Input-input:focus,
+.mantine-Textarea-input:focus,
+.mantine-Select-input:focus,
+.mantine-NumberInput-input:focus,
+.mantine-Input-input:focus-within,
+.mantine-Textarea-input:focus-within,
+.mantine-Select-input:focus-within,
+.mantine-NumberInput-input:focus-within {
+  border-color: var(--control-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.mantine-Paper-root {
+  border-color: var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.mantine-Modal-content,
+.mantine-Drawer-content {
+  background: var(--bg-secondary);
+}
+
+.mantine-Tabs-list {
+  border-color: var(--border-color);
+}
+
+.mantine-Tabs-tab {
+  color: var(--text-secondary);
+  font-weight: 700;
+  border-radius: 8px 8px 0 0;
+}
+
+.mantine-Tabs-tab[data-active="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
 }

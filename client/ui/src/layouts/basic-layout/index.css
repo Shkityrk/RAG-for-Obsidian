@@ -1,11 +1,14 @@
 .navbar {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
+    padding: 14px 24px;
+    border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+    backdrop-filter: blur(10px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    box-shadow: var(--card-shadow);
+    z-index: 10;
 }
 
 .navbar__links {
@@ -26,42 +29,49 @@
 
 .navbar__link {
     text-decoration: none;
-    padding: 10px 20px;
+    padding: 10px 18px;
     color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 15px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    border-radius: var(--radius-md);
+    transition: all 0.24s ease;
     position: relative;
+    border: 1px solid transparent;
 }
 
 .navbar__link:hover {
-    background-color: var(--bg-secondary);
+    background-color: var(--surface-soft);
     color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--secondary-accent) 32%, transparent);
     cursor: pointer;
+    transform: translateY(-1px);
 }
 
 .navbar__link.active {
-    color: var(--accent);
-    background-color: var(--bg-secondary);
+    color: #ffffff;
+    background: var(--accent);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .navbar__link-mobile {
     text-decoration: none;
     padding: 12px 16px;
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 700;
     font-size: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     transition: all 0.2s ease;
     display: block;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
 }
 
 .navbar__link-mobile:hover,
 .navbar__link-mobile.active {
-    background-color: var(--bg-primary);
+    background-color: var(--accent-soft);
     color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 /* Мобильные стили */

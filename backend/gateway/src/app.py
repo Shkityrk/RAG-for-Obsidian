@@ -203,6 +203,21 @@ async def llm_tokens_proxy(request: Request) -> Response:
     return await _proxy_core_raw(request, "/llm_tokens/")
 
 
+@app_object.get("/api/settings/llm/")
+async def settings_llm_get_proxy(request: Request) -> Response:
+    return await _proxy_core_raw(request, "/settings/llm/")
+
+
+@app_object.put("/api/settings/llm/")
+async def settings_llm_put_proxy(request: Request) -> Response:
+    return await _proxy_core_raw(request, "/settings/llm/")
+
+
+@app_object.post("/api/settings/llm/checking/")
+async def settings_llm_check_proxy(request: Request) -> Response:
+    return await _proxy_core_raw(request, "/settings/llm/checking/")
+
+
 @app_object.post("/api/chats/")
 async def chats_create_proxy(request: Request) -> Response:
     return await _proxy_core_raw(request, "/chats/")

@@ -14,31 +14,43 @@ import '@mantine/notifications/styles.css';
 
 
 const theme = createTheme({
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-    defaultRadius: 'md',
-    primaryColor: "blue",
+    fontFamily: '"Manrope", "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", sans-serif',
+    defaultRadius: 'lg',
+    primaryColor: "mts",
     headings: {
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-        fontWeight: '600',
+        fontFamily: '"Manrope", "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", sans-serif',
+        fontWeight: '700',
     },
     colors: {
-        blue: [
-            '#e3f2fd',
-            '#bbdefb',
-            '#90caf9',
-            '#64b5f6',
-            '#42a5f5',
-            '#2196f3',
-            '#1e88e5',
-            '#1976d2',
-            '#1565c0',
-            '#0d47a1',
+        mts: [
+            '#fff0f3',
+            '#ffd8e0',
+            '#ffb0c0',
+            '#ff869f',
+            '#ff5b7d',
+            '#ff2f5a',
+            '#ff0032',
+            '#dc002b',
+            '#b30023',
+            '#8a001b',
+        ],
+        sky: [
+            '#edf4ff',
+            '#d5e4ff',
+            '#a9c6ff',
+            '#7aa8ff',
+            '#518dff',
+            '#2b7cff',
+            '#1269ea',
+            '#0a57c4',
+            '#01469e',
+            '#00347b',
         ],
     },
     defaultGradient: {
-        from: '#4a9eff',
-        to: '#2196f3',
-        deg: 90,
+        from: '#ff0032',
+        to: '#2b7cff',
+        deg: 118,
     },
 });
 

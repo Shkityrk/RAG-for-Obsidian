@@ -13,6 +13,10 @@ const LINKS = [
         title: "Index",
         url: "/index"
     },
+    {
+        title: "Settings",
+        url: "/settings"
+    },
 ]
 
 export interface BasicLayoutProps  {
@@ -101,7 +105,7 @@ const BasicLayout = (props: BasicLayoutProps) => {
                 </Stack>
             </Drawer>
             
-            <main style={{flex: 1, overflow: "hidden", backgroundColor: "var(--bg-primary)"}}>
+            <main style={{flex: 1, overflow: "auto", backgroundColor: "var(--bg-primary)"}}>
                 {props.children}
             </main>
         </div>

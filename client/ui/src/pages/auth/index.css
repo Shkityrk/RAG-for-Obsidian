@@ -1,0 +1,39 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-secondary) 95%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--panel-shadow);
+}
+
+.auth-title {
+  color: var(--text-primary);
+}
+
+.auth-tabs .mantine-Tabs-list {
+  gap: 6px;
+}
+
+.auth-tabs .mantine-Tabs-tab {
+  border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 16px 12px;
+    align-items: stretch;
+  }
+
+  .auth-card {
+    border-radius: var(--radius-md);
+  }
+}

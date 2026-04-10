@@ -89,7 +89,24 @@ RAG_AGENT_SEARCH_LIMIT = int(os.getenv("RAG_AGENT_SEARCH_LIMIT", "40"))
 RAG_AGENT_MAX_SUBQUERIES = int(os.getenv("RAG_AGENT_MAX_SUBQUERIES", "4"))
 RAG_AGENT_HISTORY_MESSAGES = int(os.getenv("RAG_AGENT_HISTORY_MESSAGES", "8"))
 RAG_AGENT_CONTEXT_FRAGMENT_CHARS = int(os.getenv("RAG_AGENT_CONTEXT_FRAGMENT_CHARS", "1000"))
+CHAT_TITLE_MAX_CHARS = int(os.getenv("CHAT_TITLE_MAX_CHARS", "48"))
 INT32_MAX = 2_147_483_647
+
+DEFAULT_LLM_SETTINGS: dict[str, Any] = {
+    "openrouter_api_key": OPENROUTER_API_KEY,
+    "openrouter_llm_model": OPENROUTER_LLM_MODEL,
+    "openrouter_deep_research_model": OPENROUTER_DEEP_RESEARCH_MODEL,
+    "temperature": 0.2,
+    "top_p": 1.0,
+    "presence_penalty": 0.0,
+    "frequency_penalty": 0.0,
+    "max_tokens": 900,
+    "deep_research_temperature": 0.1,
+    "deep_research_top_p": 1.0,
+    "deep_research_presence_penalty": 0.0,
+    "deep_research_frequency_penalty": 0.0,
+    "deep_research_max_tokens": 1600,
+}
 
 
 class Base(DeclarativeBase):
@@ -269,30 +286,84 @@ class LLMTokensResponse(BaseModel):
     output_tokens: int
 
 
+class LLMAvailabilityResponse(BaseModel):
+    is_available: bool
+    error_message: str
+
+
+class LLMSettingsRequest(BaseModel):
+    openrouter_api_key: str
+    openrouter_llm_model: str
+    openrouter_deep_research_model: str
+    temperature: float = 0.2
+    top_p: float = 1.0
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    max_tokens: int = 900
+    deep_research_temperature: float = 0.1
+    deep_research_top_p: float = 1.0
+    deep_research_presence_penalty: float = 0.0
+    deep_research_frequency_penalty: float = 0.0
+    deep_research_max_tokens: int = 1600
+
+
+class LLMSettingsResponse(LLMSettingsRequest):
+    pass
+
+
 class EmbeddingsService:
     def __init__(self, batch_size: int = EMBED_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
-    def embed_many(self, texts: list[str]) -> list[list[float]]:
+    def embed_many(
+        self,
+        texts: list[str],
+        *,
+        openrouter_api_key: str | None = None,
+        openrouter_model: str | None = None,
+        provider: str | None = None,
+    ) -> list[list[float]]:
         if not texts:
             return []
         vectors: list[list[float]] = []
         for i in range(0, len(texts), self.batch_size):
             batch = texts[i : i + self.batch_size]
-            vectors.extend(self._embed_batch(batch))
+            vectors.extend(
+                self._embed_batch(
+                    batch,
+                    openrouter_api_key=openrouter_api_key,
+                    openrouter_model=openrouter_model,
+                    provider=provider,
+                )
+            )
         return vectors
 
-    def _embed_batch(self, batch: list[str]) -> list[list[float]]:
-        if EMBEDDINGS_PROVIDER == "openrouter":
-            if not OPENROUTER_API_KEY:
+    def _embed_batch(
+        self,
+        batch: list[str],
+        *,
+        openrouter_api_key: str | None = None,
+        openrouter_model: str | None = None,
+        provider: str | None = None,
+    ) -> list[list[float]]:
+        effective_provider = (provider or EMBEDDINGS_PROVIDER).lower()
+        effective_api_key = openrouter_api_key or OPENROUTER_API_KEY
+        effective_model = openrouter_model or OPENROUTER_EMBED_MODEL
+
+        if effective_provider == "openrouter":
+            if not effective_api_key:
                 logger.warning("OpenRouter API key is empty, fallback to hash embeddings")
                 return [self._embed_hash(text) for text in batch]
             try:
-                return self._embed_openrouter(batch)
+                return self._embed_openrouter(
+                    batch,
+                    api_key=effective_api_key,
+                    model=effective_model,
+                )
             except Exception as exc:
                 logger.warning("OpenRouter embedding failed, fallback to hash embeddings: %s", exc)
                 return [self._embed_hash(text) for text in batch]
-        if EMBEDDINGS_PROVIDER == "ollama":
+        if effective_provider == "ollama":
             try:
                 return [self._embed_ollama(text) for text in batch]
             except Exception as exc:
@@ -318,10 +389,10 @@ class EmbeddingsService:
         return [float(x) for x in embedding]
 
     @staticmethod
-    def _embed_openrouter(batch: list[str]) -> list[list[float]]:
-        payload = {"model": OPENROUTER_EMBED_MODEL, "input": batch}
+    def _embed_openrouter(batch: list[str], *, api_key: str, model: str) -> list[list[float]]:
+        payload = {"model": model, "input": batch}
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
         with httpx.Client(timeout=60.0) as client:
@@ -508,6 +579,15 @@ def _parse_json_object(raw: str) -> dict[str, Any]:
     return {}
 
 
+def _derive_chat_title_from_message(message_content: str, max_chars: int = CHAT_TITLE_MAX_CHARS) -> str:
+    normalized = " ".join(message_content.split()).strip()
+    if not normalized:
+        return "New Chat"
+    if len(normalized) <= max_chars:
+        return normalized
+    return normalized[:max_chars].rstrip()
+
+
 class OpenRouterLLMService:
     def __init__(self) -> None:
         self.base_url = OPENROUTER_BASE_URL.rstrip("/")
@@ -541,8 +621,13 @@ class OpenRouterLLMService:
         temperature: float = 0.2,
         max_tokens: int = 900,
         model: str | None = None,
+        api_key: str | None = None,
+        top_p: float | None = None,
+        presence_penalty: float | None = None,
+        frequency_penalty: float | None = None,
     ) -> tuple[str, tuple[int, int]]:
-        if not self.api_key:
+        effective_api_key = api_key or self.api_key
+        if not effective_api_key:
             raise RuntimeError("OPENROUTER_API_KEY is not configured")
 
         payload = {
@@ -554,8 +639,14 @@ class OpenRouterLLMService:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        if top_p is not None:
+            payload["top_p"] = top_p
+        if presence_penalty is not None:
+            payload["presence_penalty"] = presence_penalty
+        if frequency_penalty is not None:
+            payload["frequency_penalty"] = frequency_penalty
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {effective_api_key}",
             "Content-Type": "application/json",
         }
 
@@ -610,7 +701,13 @@ class VaultChatAgent:
             return False
         return _vault_id_matches(username=username, vault_path=vault_path, vault_id=vault_id)
 
-    def _decompose_query(self, user_query: str, *, llm_model: str | None = None) -> tuple[list[str], tuple[int, int]]:
+    def _decompose_query(
+        self,
+        user_query: str,
+        *,
+        llm_model: str | None = None,
+        api_key: str | None = None,
+    ) -> tuple[list[str], tuple[int, int]]:
         normalized_query = self._normalize_query(user_query)
         if not normalized_query:
             return [], (0, 0)
@@ -633,6 +730,7 @@ class VaultChatAgent:
                 temperature=0.0,
                 max_tokens=220,
                 model=llm_model,
+                api_key=api_key,
             )
             payload = _parse_json_object(llm_text)
             raw_queries = payload.get("search_queries", [])
@@ -654,11 +752,23 @@ class VaultChatAgent:
             logger.warning("Failed to decompose user query with LLM, using original query only: %s", exc)
             return [normalized_query], (0, 0)
 
-    def _retrieve_fragments(self, *, username: str, vault_id: int, search_queries: list[str]) -> list[FragmentInfoSchema]:
+    def _retrieve_fragments(
+        self,
+        *,
+        username: str,
+        vault_id: int,
+        search_queries: list[str],
+        api_key: str | None,
+    ) -> list[FragmentInfoSchema]:
         if not search_queries:
             return []
 
-        vectors = self.embeddings.embed_many(search_queries)
+        vectors = self.embeddings.embed_many(
+            search_queries,
+            openrouter_api_key=api_key,
+            openrouter_model=OPENROUTER_EMBED_MODEL,
+            provider="openrouter",
+        )
         if not vectors:
             return []
 
@@ -810,14 +920,24 @@ class VaultChatAgent:
         vault_id: int,
         user_query: str,
         chat_history: list[dict[str, str]],
+        settings: dict[str, Any],
         deep_research: bool = False,
     ) -> tuple[str, list[str], list[FragmentInfoSchema], tuple[int, int]]:
-        response_model = OPENROUTER_DEEP_RESEARCH_MODEL if deep_research else None
-        search_queries, decompose_usage = self._decompose_query(user_query, llm_model=response_model)
+        api_key = str(settings.get("openrouter_api_key", "") or "").strip()
+        response_model = str(
+            settings.get("openrouter_deep_research_model" if deep_research else "openrouter_llm_model")
+            or (OPENROUTER_DEEP_RESEARCH_MODEL if deep_research else OPENROUTER_LLM_MODEL)
+        )
+        search_queries, decompose_usage = self._decompose_query(
+            user_query,
+            llm_model=response_model,
+            api_key=api_key,
+        )
         fragments = self._retrieve_fragments(
             username=username,
             vault_id=vault_id,
             search_queries=search_queries,
+            api_key=api_key,
         )
         related_documents = sorted({fragment.filename for fragment in fragments})
 
@@ -852,11 +972,31 @@ class VaultChatAgent:
             answer, answer_usage = self._run_llm_with_retry(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                temperature=0.1 if deep_research else 0.2,
-                max_tokens=1600 if deep_research else 900,
+                temperature=float(
+                    settings.get("deep_research_temperature" if deep_research else "temperature", 0.1 if deep_research else 0.2)
+                ),
+                max_tokens=int(
+                    settings.get("deep_research_max_tokens" if deep_research else "max_tokens", 1600 if deep_research else 900)
+                ),
                 attempts=4 if deep_research else 3,
                 retry_delay_seconds=1.5,
                 model=response_model,
+                api_key=api_key,
+                top_p=float(
+                    settings.get("deep_research_top_p" if deep_research else "top_p", 1.0)
+                ),
+                presence_penalty=float(
+                    settings.get(
+                        "deep_research_presence_penalty" if deep_research else "presence_penalty",
+                        0.0,
+                    )
+                ),
+                frequency_penalty=float(
+                    settings.get(
+                        "deep_research_frequency_penalty" if deep_research else "frequency_penalty",
+                        0.0,
+                    )
+                ),
             )
             total_usage = (
                 decompose_usage[0] + answer_usage[0],
@@ -883,6 +1023,10 @@ class VaultChatAgent:
         attempts: int,
         retry_delay_seconds: float,
         model: str | None = None,
+        api_key: str | None = None,
+        top_p: float | None = None,
+        presence_penalty: float | None = None,
+        frequency_penalty: float | None = None,
     ) -> tuple[str, tuple[int, int]]:
         last_error: Exception | None = None
         for attempt in range(1, attempts + 1):
@@ -893,6 +1037,10 @@ class VaultChatAgent:
                     temperature=temperature,
                     max_tokens=max_tokens,
                     model=model,
+                    api_key=api_key,
+                    top_p=top_p,
+                    presence_penalty=presence_penalty,
+                    frequency_penalty=frequency_penalty,
                 )
             except Exception as exc:
                 last_error = exc
@@ -936,6 +1084,7 @@ class CoreIndexer:
     def startup(self) -> None:
         Base.metadata.create_all(bind=self.engine)
         self._ensure_llm_tokens_table()
+        self._ensure_user_llm_settings_table()
         self._ensure_qdrant_collection()
         self._start_poller()
         logger.info("Core indexer started: poll interval=%ss", POLL_INTERVAL_SECONDS)
@@ -1108,7 +1257,13 @@ class CoreIndexer:
         if not chunks:
             raise RuntimeError("Document was split into zero chunks")
 
-        vectors = self.embeddings.embed_many(chunks)
+        user_settings = self._load_user_llm_settings_by_user_id(row.user_id)
+        vectors = self.embeddings.embed_many(
+            chunks,
+            openrouter_api_key=str(user_settings.get("openrouter_api_key", "") or ""),
+            openrouter_model=OPENROUTER_EMBED_MODEL,
+            provider="openrouter",
+        )
         if len(vectors) != len(chunks):
             raise RuntimeError("Embeddings/chunks length mismatch")
 
@@ -1204,6 +1359,87 @@ class CoreIndexer:
                     """
                 )
             )
+
+    def _ensure_user_llm_settings_table(self) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS user_llm_settings (
+                        user_id INTEGER PRIMARY KEY,
+                        openrouter_api_key TEXT NOT NULL DEFAULT '',
+                        openrouter_llm_model TEXT NOT NULL DEFAULT 'google/gemini-3-flash-preview',
+                        openrouter_deep_research_model TEXT NOT NULL DEFAULT 'perplexity/sonar-deep-research',
+                        temperature DOUBLE PRECISION NOT NULL DEFAULT 0.2,
+                        top_p DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+                        presence_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                        frequency_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                        max_tokens INTEGER NOT NULL DEFAULT 900,
+                        deep_research_temperature DOUBLE PRECISION NOT NULL DEFAULT 0.1,
+                        deep_research_top_p DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+                        deep_research_presence_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                        deep_research_frequency_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                        deep_research_max_tokens INTEGER NOT NULL DEFAULT 1600,
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                    """
+                )
+            )
+
+    def _load_user_llm_settings_by_user_id(self, user_id: int | None) -> dict[str, Any]:
+        if user_id is None:
+            return dict(DEFAULT_LLM_SETTINGS)
+        with self.session_local() as db:
+            row = db.execute(
+                text(
+                    """
+                    SELECT
+                        openrouter_api_key,
+                        openrouter_llm_model,
+                        openrouter_deep_research_model,
+                        temperature,
+                        top_p,
+                        presence_penalty,
+                        frequency_penalty,
+                        max_tokens,
+                        deep_research_temperature,
+                        deep_research_top_p,
+                        deep_research_presence_penalty,
+                        deep_research_frequency_penalty,
+                        deep_research_max_tokens
+                    FROM user_llm_settings
+                    WHERE user_id = :user_id
+                    """
+                ),
+                {"user_id": user_id},
+            ).first()
+        if row is None:
+            return dict(DEFAULT_LLM_SETTINGS)
+        return {
+            "openrouter_api_key": str(row[0] or ""),
+            "openrouter_llm_model": str(row[1] or OPENROUTER_LLM_MODEL),
+            "openrouter_deep_research_model": str(row[2] or OPENROUTER_DEEP_RESEARCH_MODEL),
+            "temperature": float(row[3] if row[3] is not None else DEFAULT_LLM_SETTINGS["temperature"]),
+            "top_p": float(row[4] if row[4] is not None else DEFAULT_LLM_SETTINGS["top_p"]),
+            "presence_penalty": float(row[5] if row[5] is not None else DEFAULT_LLM_SETTINGS["presence_penalty"]),
+            "frequency_penalty": float(row[6] if row[6] is not None else DEFAULT_LLM_SETTINGS["frequency_penalty"]),
+            "max_tokens": int(row[7] if row[7] is not None else DEFAULT_LLM_SETTINGS["max_tokens"]),
+            "deep_research_temperature": float(
+                row[8] if row[8] is not None else DEFAULT_LLM_SETTINGS["deep_research_temperature"]
+            ),
+            "deep_research_top_p": float(
+                row[9] if row[9] is not None else DEFAULT_LLM_SETTINGS["deep_research_top_p"]
+            ),
+            "deep_research_presence_penalty": float(
+                row[10] if row[10] is not None else DEFAULT_LLM_SETTINGS["deep_research_presence_penalty"]
+            ),
+            "deep_research_frequency_penalty": float(
+                row[11] if row[11] is not None else DEFAULT_LLM_SETTINGS["deep_research_frequency_penalty"]
+            ),
+            "deep_research_max_tokens": int(
+                row[12] if row[12] is not None else DEFAULT_LLM_SETTINGS["deep_research_max_tokens"]
+            ),
+        }
 
     def get_stats(self) -> VaultStats:
         collection_info = self.qdrant_client.get_collection(collection_name=QDRANT_COLLECTION)
@@ -1541,6 +1777,219 @@ def _read_llm_tokens(db: Any, user_id: int) -> LLMTokensResponse:
         return LLMTokensResponse(input_tokens=0, output_tokens=0)
 
 
+def _ensure_user_llm_settings_table(db: Any) -> None:
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS user_llm_settings (
+                user_id INTEGER PRIMARY KEY,
+                openrouter_api_key TEXT NOT NULL DEFAULT '',
+                openrouter_llm_model TEXT NOT NULL DEFAULT 'google/gemini-3-flash-preview',
+                openrouter_deep_research_model TEXT NOT NULL DEFAULT 'perplexity/sonar-deep-research',
+                temperature DOUBLE PRECISION NOT NULL DEFAULT 0.2,
+                top_p DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+                presence_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                frequency_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                max_tokens INTEGER NOT NULL DEFAULT 900,
+                deep_research_temperature DOUBLE PRECISION NOT NULL DEFAULT 0.1,
+                deep_research_top_p DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+                deep_research_presence_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                deep_research_frequency_penalty DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                deep_research_max_tokens INTEGER NOT NULL DEFAULT 1600,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+    )
+
+
+def _sanitize_llm_settings_payload(payload: LLMSettingsRequest) -> dict[str, Any]:
+    max_tokens = max(64, min(32000, int(payload.max_tokens)))
+    deep_max_tokens = max(64, min(64000, int(payload.deep_research_max_tokens)))
+
+    return {
+        "openrouter_api_key": payload.openrouter_api_key.strip(),
+        "openrouter_llm_model": payload.openrouter_llm_model.strip() or OPENROUTER_LLM_MODEL,
+        "openrouter_deep_research_model": payload.openrouter_deep_research_model.strip() or OPENROUTER_DEEP_RESEARCH_MODEL,
+        "temperature": max(0.0, min(2.0, float(payload.temperature))),
+        "top_p": max(0.0, min(1.0, float(payload.top_p))),
+        "presence_penalty": max(-2.0, min(2.0, float(payload.presence_penalty))),
+        "frequency_penalty": max(-2.0, min(2.0, float(payload.frequency_penalty))),
+        "max_tokens": max_tokens,
+        "deep_research_temperature": max(0.0, min(2.0, float(payload.deep_research_temperature))),
+        "deep_research_top_p": max(0.0, min(1.0, float(payload.deep_research_top_p))),
+        "deep_research_presence_penalty": max(-2.0, min(2.0, float(payload.deep_research_presence_penalty))),
+        "deep_research_frequency_penalty": max(-2.0, min(2.0, float(payload.deep_research_frequency_penalty))),
+        "deep_research_max_tokens": deep_max_tokens,
+    }
+
+
+def _read_user_llm_settings(db: Any, user_id: int) -> dict[str, Any]:
+    _ensure_user_llm_settings_table(db)
+    row = db.execute(
+        text(
+            """
+            SELECT
+                openrouter_api_key,
+                openrouter_llm_model,
+                openrouter_deep_research_model,
+                temperature,
+                top_p,
+                presence_penalty,
+                frequency_penalty,
+                max_tokens,
+                deep_research_temperature,
+                deep_research_top_p,
+                deep_research_presence_penalty,
+                deep_research_frequency_penalty,
+                deep_research_max_tokens
+            FROM user_llm_settings
+            WHERE user_id = :user_id
+            """
+        ),
+        {"user_id": user_id},
+    ).first()
+    if row is None:
+        return dict(DEFAULT_LLM_SETTINGS)
+
+    return {
+        "openrouter_api_key": str(row[0] or ""),
+        "openrouter_llm_model": str(row[1] or OPENROUTER_LLM_MODEL),
+        "openrouter_deep_research_model": str(row[2] or OPENROUTER_DEEP_RESEARCH_MODEL),
+        "temperature": float(row[3] if row[3] is not None else DEFAULT_LLM_SETTINGS["temperature"]),
+        "top_p": float(row[4] if row[4] is not None else DEFAULT_LLM_SETTINGS["top_p"]),
+        "presence_penalty": float(row[5] if row[5] is not None else DEFAULT_LLM_SETTINGS["presence_penalty"]),
+        "frequency_penalty": float(row[6] if row[6] is not None else DEFAULT_LLM_SETTINGS["frequency_penalty"]),
+        "max_tokens": int(row[7] if row[7] is not None else DEFAULT_LLM_SETTINGS["max_tokens"]),
+        "deep_research_temperature": float(
+            row[8] if row[8] is not None else DEFAULT_LLM_SETTINGS["deep_research_temperature"]
+        ),
+        "deep_research_top_p": float(
+            row[9] if row[9] is not None else DEFAULT_LLM_SETTINGS["deep_research_top_p"]
+        ),
+        "deep_research_presence_penalty": float(
+            row[10] if row[10] is not None else DEFAULT_LLM_SETTINGS["deep_research_presence_penalty"]
+        ),
+        "deep_research_frequency_penalty": float(
+            row[11] if row[11] is not None else DEFAULT_LLM_SETTINGS["deep_research_frequency_penalty"]
+        ),
+        "deep_research_max_tokens": int(
+            row[12] if row[12] is not None else DEFAULT_LLM_SETTINGS["deep_research_max_tokens"]
+        ),
+    }
+
+
+def _upsert_user_llm_settings(db: Any, user_id: int, payload: LLMSettingsRequest) -> None:
+    _ensure_user_llm_settings_table(db)
+    settings = _sanitize_llm_settings_payload(payload)
+    existing = db.execute(
+        text("SELECT user_id FROM user_llm_settings WHERE user_id = :user_id"),
+        {"user_id": user_id},
+    ).first()
+    if existing is None:
+        db.execute(
+            text(
+                """
+                INSERT INTO user_llm_settings (
+                    user_id,
+                    openrouter_api_key,
+                    openrouter_llm_model,
+                    openrouter_deep_research_model,
+                    temperature,
+                    top_p,
+                    presence_penalty,
+                    frequency_penalty,
+                    max_tokens,
+                    deep_research_temperature,
+                    deep_research_top_p,
+                    deep_research_presence_penalty,
+                    deep_research_frequency_penalty,
+                    deep_research_max_tokens,
+                    updated_at
+                ) VALUES (
+                    :user_id,
+                    :openrouter_api_key,
+                    :openrouter_llm_model,
+                    :openrouter_deep_research_model,
+                    :temperature,
+                    :top_p,
+                    :presence_penalty,
+                    :frequency_penalty,
+                    :max_tokens,
+                    :deep_research_temperature,
+                    :deep_research_top_p,
+                    :deep_research_presence_penalty,
+                    :deep_research_frequency_penalty,
+                    :deep_research_max_tokens,
+                    NOW()
+                )
+                """
+            ),
+            {"user_id": user_id, **settings},
+        )
+    else:
+        db.execute(
+            text(
+                """
+                UPDATE user_llm_settings SET
+                    openrouter_api_key = :openrouter_api_key,
+                    openrouter_llm_model = :openrouter_llm_model,
+                    openrouter_deep_research_model = :openrouter_deep_research_model,
+                    temperature = :temperature,
+                    top_p = :top_p,
+                    presence_penalty = :presence_penalty,
+                    frequency_penalty = :frequency_penalty,
+                    max_tokens = :max_tokens,
+                    deep_research_temperature = :deep_research_temperature,
+                    deep_research_top_p = :deep_research_top_p,
+                    deep_research_presence_penalty = :deep_research_presence_penalty,
+                    deep_research_frequency_penalty = :deep_research_frequency_penalty,
+                    deep_research_max_tokens = :deep_research_max_tokens,
+                    updated_at = NOW()
+                WHERE user_id = :user_id
+                """
+            ),
+            {"user_id": user_id, **settings},
+        )
+    db.commit()
+
+
+def _check_llm_settings_availability(payload: LLMSettingsRequest) -> LLMAvailabilityResponse:
+    try:
+        sanitized = _sanitize_llm_settings_payload(payload)
+        api_key = str(sanitized["openrouter_api_key"])
+        if not api_key:
+            return LLMAvailabilityResponse(is_available=False, error_message="openrouter_api_key is empty")
+
+        test_llm = OpenRouterLLMService()
+        test_llm.run(
+            system_prompt="You are a healthcheck assistant.",
+            user_prompt="Reply with: ok",
+            temperature=0.0,
+            max_tokens=8,
+            model=str(sanitized["openrouter_llm_model"]),
+            api_key=api_key,
+        )
+        test_llm.run(
+            system_prompt="You are a healthcheck assistant.",
+            user_prompt="Reply with: ok",
+            temperature=0.0,
+            max_tokens=8,
+            model=str(sanitized["openrouter_deep_research_model"]),
+            api_key=api_key,
+        )
+
+        indexer.embeddings.embed_many(
+            ["healthcheck"],
+            openrouter_api_key=api_key,
+            openrouter_model=OPENROUTER_EMBED_MODEL,
+            provider="openrouter",
+        )
+        return LLMAvailabilityResponse(is_available=True, error_message="")
+    except Exception as exc:
+        return LLMAvailabilityResponse(is_available=False, error_message=str(exc))
+
+
 def _process_chat_message(
     *,
     user_message: QueryRequest,
@@ -1555,6 +2004,14 @@ def _process_chat_message(
             raise HTTPException(status_code=404, detail="Chat not found")
         if chat.user_id != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
+        if not chat.title or chat.title.strip().lower() == "new chat":
+            existing_messages_count = (
+                db.query(MessageModel.id)
+                .filter(MessageModel.chat_id == user_message.chat_id)
+                .count()
+            )
+            if existing_messages_count == 0:
+                chat.title = _derive_chat_title_from_message(user_message.content)
 
         vault = indexer.get_vault_by_id(username=username, vault_id=user_message.vault_id)
         if vault is None:
@@ -1571,11 +2028,14 @@ def _process_chat_message(
         db.add(user_msg)
         db.commit()
 
+        user_settings = _read_user_llm_settings(db, user_id)
+
         answer, related_documents, fragments, used_tokens = chat_agent.run(
             username=username,
             vault_id=user_message.vault_id,
             user_query=user_message.content,
             chat_history=history,
+            settings=user_settings,
             deep_research=deep_research,
         )
 
@@ -1766,6 +2226,31 @@ def get_llm_tokens(authorization: str | None = Header(default=None)) -> LLMToken
     user_id = _extract_user_id_from_token(authorization)
     with indexer.session_local() as db:
         return _read_llm_tokens(db, user_id)
+
+
+@app_object.get("/settings/llm/", response_model=LLMSettingsResponse)
+def get_llm_settings(authorization: str | None = Header(default=None)) -> LLMSettingsResponse:
+    user_id = _extract_user_id_from_token(authorization)
+    with indexer.session_local() as db:
+        settings = _read_user_llm_settings(db, user_id)
+        return LLMSettingsResponse(**settings)
+
+
+@app_object.put("/settings/llm/", response_model=MessageResponse)
+def update_llm_settings(
+    payload: LLMSettingsRequest,
+    authorization: str | None = Header(default=None),
+) -> MessageResponse:
+    user_id = _extract_user_id_from_token(authorization)
+    with indexer.session_local() as db:
+        _upsert_user_llm_settings(db, user_id, payload)
+    return MessageResponse(message="LLM settings updated successfully")
+
+
+@app_object.post("/settings/llm/checking/", response_model=LLMAvailabilityResponse)
+def check_llm_settings(payload: LLMSettingsRequest, authorization: str | None = Header(default=None)) -> LLMAvailabilityResponse:
+    _ = _extract_user_id_from_token(authorization)
+    return _check_llm_settings_availability(payload)
 
 
 # Chats API

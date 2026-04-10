@@ -82,7 +82,7 @@ export const IndexPage = () => {
 
     return (
         <BasicLayout>
-            <Stack gap="xl" p="xl" maw={1200} mx="auto" pt={32}>
+            <Stack gap="xl" p={{ base: "md", sm: "xl" }} maw={1200} mx="auto" pt={{ base: 16, sm: 32 }}>
                 {selectedVaultId ? (
                     <>
                         <Box pos="relative" style={{borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)'}}>

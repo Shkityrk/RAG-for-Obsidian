@@ -3,6 +3,7 @@ import {Page404} from "../pages/404";
 import {IndexPage} from "../pages/index";
 import {AuthPage} from "../pages/auth";
 import {ChatPage} from "../pages/chat";
+import {SettingsPage} from "../pages/settings";
 import {isAuthenticated} from "../utils/auth";
 
 // Компонент для защиты маршрутов
@@ -39,6 +40,14 @@ const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <IndexPage/>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/settings",
+        element: (
+            <ProtectedRoute>
+                <SettingsPage/>
             </ProtectedRoute>
         ),
     },

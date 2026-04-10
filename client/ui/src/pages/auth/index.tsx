@@ -3,6 +3,7 @@ import { Container, Paper, TextInput, PasswordInput, Button, Stack, Title, Tabs 
 import { useLogin, useRegister } from '../../hooks/auth';
 import { isAuthenticated } from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import './index.css';
 
 export const AuthPage = () => {
   const [firstName, setFirstName] = useState('');
@@ -39,11 +40,11 @@ export const AuthPage = () => {
   };
 
   return (
-    <Container size="xs" style={{ height: '100vh', display: 'flex', alignItems: 'center' }}>
-      <Paper shadow="md" p={30} radius="md" withBorder style={{ width: '100%' }}>
+    <Container size="xs" className="auth-page">
+      <Paper shadow="md" p={30} withBorder className="auth-card">
         <Stack gap="md">
-          <Title order={2} ta="center">RAG on Obsidian</Title>
-          <Tabs defaultValue="login">
+          <Title order={2} ta="center" className="auth-title">RAG on Obsidian</Title>
+          <Tabs defaultValue="login" className="auth-tabs">
             <Tabs.List>
               <Tabs.Tab value="login">Login</Tabs.Tab>
               <Tabs.Tab value="register">Register</Tabs.Tab>

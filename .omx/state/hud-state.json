@@ -1,6 +1,6 @@
 {
-  "last_turn_at": "2026-04-10T11:58:00.312Z",
-  "turn_count": 6,
-  "last_progress_at": "2026-04-10T11:58:00.312Z",
-  "last_agent_output": "Сделано: кнопка справа от отправки теперь работает как `Deep Research` по vault с моделью `perplexit"
+  "last_turn_at": "2026-04-10T16:51:33.496Z",
+  "turn_count": 26,
+  "last_progress_at": "2026-04-10T16:51:33.496Z",
+  "last_agent_output": "Сделано.\n\n1. Убрал градиенты и уменьшил скругления в клиенте  \n- Градиенты удалены полностью из `cli"
 }
