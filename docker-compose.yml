@@ -97,7 +97,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_APPLICATION_MODE=dev
-        - VITE_API_BASE_URL=http://localhost
+        - VITE_API_BASE_URL=http://213.208.166.4
     container_name: frontend_app
     env_file:
       - environment/.env
