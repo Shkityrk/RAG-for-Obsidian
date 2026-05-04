@@ -46,22 +46,22 @@ export const AuthPage = () => {
           <Title order={2} ta="center" className="auth-title">RAG on Obsidian</Title>
           <Tabs defaultValue="login" className="auth-tabs">
             <Tabs.List>
-              <Tabs.Tab value="login">Login</Tabs.Tab>
-              <Tabs.Tab value="register">Register</Tabs.Tab>
+              <Tabs.Tab value="login">Вход</Tabs.Tab>
+              <Tabs.Tab value="register">Регистрация</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="login" pt="xl">
               <Stack gap="md">
                 <TextInput
-                  label="Username"
+                  label="Имя пользователя"
                   placeholder="your_username"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
                 <PasswordInput
-                  label="Password"
-                  placeholder="Your password"
+                  label="Пароль"
+                  placeholder="Ваш пароль"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -72,7 +72,7 @@ export const AuthPage = () => {
                   loading={isLoginPending}
                   disabled={!username || !password}
                 >
-                  Login
+                  Войти
                 </Button>
               </Stack>
             </Tabs.Panel>
@@ -80,14 +80,14 @@ export const AuthPage = () => {
             <Tabs.Panel value="register" pt="xl">
               <Stack gap="md">
                 <TextInput
-                  label="First name"
+                  label="Имя"
                   placeholder="John"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
                 <TextInput
-                  label="Last name"
+                  label="Фамилия"
                   placeholder="Doe"
                   required
                   value={lastName}
@@ -101,15 +101,15 @@ export const AuthPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <TextInput
-                  label="Username"
+                  label="Имя пользователя"
                   placeholder="your_username"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
                 <PasswordInput
-                  label="Password"
-                  placeholder="Your password"
+                  label="Пароль"
+                  placeholder="Ваш пароль"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -120,7 +120,7 @@ export const AuthPage = () => {
                   loading={isRegisterPending}
                   disabled={!firstName || !lastName || !email || !username || !password}
                 >
-                  Register
+                  Зарегистрироваться
                 </Button>
               </Stack>
             </Tabs.Panel>

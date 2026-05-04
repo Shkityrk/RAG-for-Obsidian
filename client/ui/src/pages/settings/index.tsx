@@ -7,8 +7,6 @@ import {
     MantineColorScheme,
     Title,
     Text,
-    TextInput,
-    PasswordInput,
     NumberInput,
     Button,
     Group,
@@ -20,8 +18,6 @@ import { useCheckLLM, useLLMSettings, useUpdateLLMSettings } from "../../hooks/s
 import { LLMSettingsRequest } from "../../types/settings";
 import {
     DEFAULT_LLM_SETTINGS,
-    DEEP_RESEARCH_MODEL_SUGGESTIONS,
-    OPENROUTER_MODEL_SUGGESTIONS,
 } from "./settings_config";
 
 export const SettingsPage = () => {
@@ -53,16 +49,16 @@ export const SettingsPage = () => {
     return (
         <BasicLayout>
             <Stack gap="xl" p={{ base: "md", sm: "xl" }} maw={600} mx="auto" pt={{ base: 16, sm: 32 }}>
-                <Title order={2} fw={600} mb="md">Settings</Title>
+                <Title order={2} fw={600} mb="md">Настройки</Title>
                 
                 <Stack gap="md">
                     <div>
-                        <Text size="sm" fw={500} mb={8}>Theme</Text>
+                        <Text size="sm" fw={500} mb={8}>Тема</Text>
                         <Select
                             variant="default"
                             size="md"
                             w="100%"
-                            data={[{label: "Dark", value: "dark"}, {label: "Light", value: "light"}]}
+                            data={[{label: "Темная", value: "dark"}, {label: "Светлая", value: "light"}]}
                             value={computedColorScheme} 
                             onChange={value => value && setColorScheme(value as MantineColorScheme)}
                         />
@@ -72,33 +68,12 @@ export const SettingsPage = () => {
                 <Divider />
 
                 <Stack gap="md">
-                    <Title order={4}>OpenRouter</Title>
+                    <Title order={4}>Параметры модели</Title>
                     {isLoading ? (
                         <Loader size="sm" />
                     ) : (
                         <>
-                            <PasswordInput
-                                label="OPENROUTER_API_KEY"
-                                placeholder="sk-or-v1-..."
-                                value={form.openrouter_api_key}
-                                onChange={(event) => updateField("openrouter_api_key", event.currentTarget.value)}
-                            />
-                            <TextInput
-                                label="OPENROUTER_LLM_MODEL"
-                                placeholder="google/gemini-3-flash-preview"
-                                value={form.openrouter_llm_model}
-                                onChange={(event) => updateField("openrouter_llm_model", event.currentTarget.value)}
-                                description={`Examples: ${OPENROUTER_MODEL_SUGGESTIONS.join(", ")}`}
-                            />
-                            <TextInput
-                                label="OPENROUTER_DEEP_RESEARCH_MODEL"
-                                placeholder="perplexity/sonar-deep-research"
-                                value={form.openrouter_deep_research_model}
-                                onChange={(event) => updateField("openrouter_deep_research_model", event.currentTarget.value)}
-                                description={`Examples: ${DEEP_RESEARCH_MODEL_SUGGESTIONS.join(", ")}`}
-                            />
-
-                            <Divider label="Chat Model Params" />
+                            <Divider label="Параметры чат-модели" />
                             <NumberInput
                                 label="temperature"
                                 value={form.temperature}
@@ -144,7 +119,7 @@ export const SettingsPage = () => {
                                 step={64}
                             />
 
-                            <Divider label="Deep Research Params" />
+                            <Divider label="Параметры Deep Research" />
                             <NumberInput
                                 label="deep_research_temperature"
                                 value={form.deep_research_temperature}
@@ -196,13 +171,13 @@ export const SettingsPage = () => {
                                     loading={isChecking}
                                     onClick={() => checkSettings(form)}
                                 >
-                                    Check
+                                    Проверить
                                 </Button>
                                 <Button
                                     loading={isSaving}
                                     onClick={() => updateSettings(form)}
                                 >
-                                    Save
+                                    Сохранить
                                 </Button>
                             </Group>
                         </>

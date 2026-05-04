@@ -65,7 +65,7 @@ export const IndexPage = () => {
     
     const updateIndex = () => {
         if (!selectedVaultId) {
-            alert('Vault is not available. Please wait for vault to load.');
+            alert('Vault недоступен. Дождитесь загрузки.');
             return;
         }
         startUpdateIndex(selectedVaultId);
@@ -74,7 +74,7 @@ export const IndexPage = () => {
     
     const handleDeleteIndex = () => {
         if (!selectedVaultId) {
-            alert('Vault is not available. Please wait for vault to load.');
+            alert('Vault недоступен. Дождитесь загрузки.');
             return;
         }
         deleteIndex(selectedVaultId);
@@ -107,7 +107,7 @@ export const IndexPage = () => {
                                 loaderProps={{type: "dots"}}
                                 variant="light"
                             >
-                                Refresh info
+                                Обновить данные
                             </Button>
                             <Button 
                                 onClick={updateIndex} 
@@ -116,7 +116,7 @@ export const IndexPage = () => {
                                 loaderProps={{type: "dots"}}
                                 variant="filled"
                             >
-                                Update Index
+                                Обновить индекс
                             </Button>
                             <Button 
                                 onClick={handleDeleteIndex} 
@@ -126,22 +126,22 @@ export const IndexPage = () => {
                                 variant="light"
                                 color="red"
                             >
-                                Remove Index
+                                Удалить индекс
                             </Button>
                         </Group>
                         <Stack gap="md">
                             <Title order={3} fw={600} mb="sm">
-                                General information
+                                Общая информация
                             </Title>
                             <Stack gap="xs">
                                 <Text size="sm">
-                                    <Text span fw={500}>Last updated:</Text> {isIndexInfoLoading? "loading...": isIndexInfoSuccess && indexInfo.last_update_time? formatDatetime(indexInfo.last_update_time): "not found"}
+                                    <Text span fw={500}>Последнее обновление:</Text> {isIndexInfoLoading? "загрузка...": isIndexInfoSuccess && indexInfo.last_update_time? formatDatetime(indexInfo.last_update_time): "не найдено"}
                                 </Text>
                                 <Text size="sm">
-                                    <Text span fw={500}>Total documents:</Text> {isIndexInfoLoading? "loading...": isIndexInfoSuccess? indexInfo.n_all_documents: "not found"}
+                                    <Text span fw={500}>Всего документов:</Text> {isIndexInfoLoading? "загрузка...": isIndexInfoSuccess? indexInfo.n_all_documents: "не найдено"}
                                 </Text>
                                 <Text size="sm">
-                                    <Text span fw={500}>Documents to update:</Text> {isIndexInfoLoading? "loading...": isIndexInfoSuccess? indexInfo.n_documents_to_update: "not found"}
+                                    <Text span fw={500}>Документов к обновлению:</Text> {isIndexInfoLoading? "загрузка...": isIndexInfoSuccess? indexInfo.n_documents_to_update: "не найдено"}
                                 </Text>
                             </Stack>
                         </Stack>
@@ -149,7 +149,7 @@ export const IndexPage = () => {
                             isProgressSuccess && indexProgress.in_progress && (
                                 <Stack gap="md">
                                     <Title order={3} fw={600}>
-                                        Update progress
+                                        Прогресс обновления
                                     </Title>
                                     {
                                         indexProgress.stages.map(
@@ -169,7 +169,7 @@ export const IndexPage = () => {
                     </>
                 ) : (
                     <Text c="dimmed" ta="center" py="xl">
-                        Vault is loading...
+                        Vault загружается...
                     </Text>
                 )}
             </Stack>

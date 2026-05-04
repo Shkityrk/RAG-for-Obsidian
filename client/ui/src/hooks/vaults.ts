@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { vaultsApi } from '../api/vaults';
 import { showSuccessNotification, showErrorNotification } from '../utils/error-notifications';
+
+const getErrorDetail = (error: unknown, fallback: string) => {
+  const axiosError = error as AxiosError<{ detail?: string }>;
+  return axiosError.response?.data?.detail || fallback;
+};
 
 export const useVaults = () => {
   return useQuery({
@@ -25,10 +31,10 @@ export const useUploadVault = () => {
     mutationFn: (file: File) => vaultsApi.upload(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
-      showSuccessNotification('Vault uploaded successfully!');
+      showSuccessNotification('Vault успешно загружен');
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to upload vault';
+    onError: (error: unknown) => {
+      const message = getErrorDetail(error, 'Не удалось загрузить vault');
       showErrorNotification(message);
     },
   });
@@ -40,10 +46,10 @@ export const useDeleteVault = () => {
     mutationFn: (vaultId: number) => vaultsApi.delete(vaultId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] });
-      showSuccessNotification('Vault deleted successfully!');
+      showSuccessNotification('Vault успешно удален');
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to delete vault';
+    onError: (error: unknown) => {
+      const message = getErrorDetail(error, 'Не удалось удалить vault');
       showErrorNotification(message);
     },
   });

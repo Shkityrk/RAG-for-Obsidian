@@ -1,20 +1,80 @@
+.app-shell {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bg-primary) 94%, #ffffff) 0%, var(--bg-primary) 100%);
+}
+
+.app-main {
+    flex: 1;
+    overflow: auto;
+    background: transparent;
+}
+
 .navbar {
-    padding: 14px 24px;
+    min-height: 64px;
+    padding: 10px 22px;
     border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
-    background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
-    backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
+    backdrop-filter: blur(14px);
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    box-shadow: var(--card-shadow);
+    box-shadow: 0 1px 0 rgba(18, 34, 58, 0.03);
     z-index: 10;
+}
+
+.navbar__brand {
+    min-width: 210px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.navbar__brand-mark {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--accent), var(--secondary-accent));
+    color: #ffffff;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--secondary-accent) 22%, transparent);
+}
+
+.navbar__brand-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.navbar__brand-name {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.navbar__brand-subtitle {
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
 .navbar__links {
     display: flex;
     gap: 8px;
     align-items: center;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
 }
 
 .navbar__user {
@@ -29,11 +89,15 @@
 
 .navbar__link {
     text-decoration: none;
-    padding: 10px 18px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
     color: var(--text-secondary);
     font-weight: 700;
     font-size: 14px;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     border-radius: var(--radius-md);
     transition: all 0.24s ease;
     position: relative;
@@ -50,19 +114,22 @@
 
 .navbar__link.active {
     color: #ffffff;
-    background: var(--accent);
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+    background: var(--text-primary);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--text-primary) 16%, transparent);
 }
 
 .navbar__link-mobile {
     text-decoration: none;
-    padding: 12px 16px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
     color: var(--text-primary);
     font-weight: 700;
     font-size: 16px;
     border-radius: var(--radius-md);
     transition: all 0.2s ease;
-    display: block;
     background-color: var(--bg-elevated);
     border: 1px solid var(--border-color);
 }
@@ -78,6 +145,10 @@
 @media (max-width: 768px) {
     .navbar__links {
         display: none;
+    }
+
+    .navbar__brand {
+        min-width: 0;
     }
     
     .navbar__burger {
@@ -99,6 +170,10 @@
     }
     
     .navbar__logout {
+        display: none;
+    }
+
+    .navbar__brand-subtitle {
         display: none;
     }
 }

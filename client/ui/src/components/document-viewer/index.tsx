@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ScrollArea, Paper, Text, Loader, Stack, Group, CloseButton } from '@mantine/core';
+import { AxiosError } from 'axios';
 import { vaultsApi } from '../../api/vaults';
 import Markdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -16,13 +18,11 @@ interface DocumentViewerProps {
     onClose?: () => void;
 }
 
-const MARKDOWN_STYLES = {
-    code: ({ ...props }: any) => {
-        const { children, className, node, ...rest } = props;
+const MARKDOWN_STYLES: Components = {
+    code: ({ children, className, ...rest }) => {
         const match = /language-(\w+)/.exec(className || '');
         return match ? (
             <SyntaxHighlighter
-                {...rest}
                 PreTag="div"
                 children={String(children).replace(/\n$/, '')}
                 language={match[1]}
@@ -40,7 +40,7 @@ const MARKDOWN_STYLES = {
             </code>
         );
     },
-    img: ({ ...props }: any) => {
+    img: ({ ...props }) => {
         const { src, alt, ...rest } = props;
         return (
             <img
@@ -57,7 +57,7 @@ const MARKDOWN_STYLES = {
             />
         );
     },
-    table: ({ ...props }: any) => {
+    table: ({ ...props }) => {
         return (
             <div style={{ 
                 overflowX: 'auto', 
@@ -148,8 +148,9 @@ const DocumentViewer = ({ vaultId, filename, fragments = [], onClose }: Document
             try {
                 const data = await vaultsApi.getFile(vaultId, filename);
                 setContent(data.content);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to load file');
+            } catch (err: unknown) {
+                const axiosError = err as AxiosError<{ detail?: string }>;
+                setError(axiosError.response?.data?.detail || 'Не удалось загрузить файл');
             } finally {
                 setLoading(false);
             }
@@ -165,7 +166,7 @@ const DocumentViewer = ({ vaultId, filename, fragments = [], onClose }: Document
             <Paper p="md" style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Stack align="center" gap="sm">
                     <Loader size="md" />
-                    <Text size="sm" c="dimmed">Loading document...</Text>
+                    <Text size="sm" c="dimmed">Загрузка документа...</Text>
                 </Stack>
             </Paper>
         );
@@ -176,7 +177,7 @@ const DocumentViewer = ({ vaultId, filename, fragments = [], onClose }: Document
             <Paper p="md" style={{ height: '100%' }}>
                 <Stack gap="sm">
                     <Group justify="space-between">
-                        <Text size="sm" fw={500}>Error</Text>
+                        <Text size="sm" fw={500}>Ошибка</Text>
                         {onClose && <CloseButton onClick={onClose} />}
                     </Group>
                     <Text size="sm" c="red">{error}</Text>

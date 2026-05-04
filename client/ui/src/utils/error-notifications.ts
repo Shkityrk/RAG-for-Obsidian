@@ -7,7 +7,7 @@ const handleAPIError = (error: unknown) => {
     if (isAxiosError<ErrorResponse>(error)) {
         notifications.show({
             color: "red",
-            title: "Error!",
+            title: "Ошибка",
             message: error.response?.data.detail,
             autoClose: 5000,
         })
@@ -18,7 +18,7 @@ const handleAPIError = (error: unknown) => {
 
 export const showErrorNotification = (message: string) => {
     notifications.show({
-        title: "Error",
+        title: "Ошибка",
         message: message,
         color: "red",
         autoClose: 5000,
@@ -27,7 +27,7 @@ export const showErrorNotification = (message: string) => {
 
 export const showSuccessNotification = (message: string) => {
     notifications.show({
-        title: "Success",
+        title: "Успешно",
         message: message,
         color: "green",
         autoClose: 5000,

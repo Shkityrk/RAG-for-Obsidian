@@ -1,9 +1,9 @@
 import BasicLayout from "../../layouts/basic-layout"
 import MessageHistory from "../../components/message-history"
 import DocumentViewer from "../../components/document-viewer"
-import { ScrollArea, Textarea, ActionIcon, Flex, Button, List, Text, Accordion, Stack, Group, Paper, Loader, Drawer, Modal } from '@mantine/core';
+import { ScrollArea, Textarea, ActionIcon, Flex, Button, List, Text, Accordion, Stack, Group, Paper, Loader, Drawer, Modal, Badge, ThemeIcon, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconArrowRight, IconInfoHexagonFilled, IconBookmarksFilled, IconSettingsFilled, IconPlus, IconSearch, IconMenu2 } from '@tabler/icons-react';
+import { IconArrowRight, IconInfoHexagonFilled, IconBookmarksFilled, IconSettingsFilled, IconPlus, IconSearch, IconMenu2, IconMessageCircle, IconDatabase, IconSparkles } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from "react";
 import { useChatMessages, useSendChatMessage, useCleanChatMessage, useSendDeepResearchMessage } from "../../hooks/messages";
 import { useLLMTokens } from "../../hooks/llm-tokens";
@@ -83,11 +83,11 @@ export const ChatPage = () => {
 
     const handleCreateChat = async () => {
         if (!selectedVaultId) {
-            alert('Vault is not available. Please wait for vault to load.');
+            alert('Vault недоступен. Дождитесь загрузки.');
             return;
         }
         try {
-            const newChat = await createChat({ vault_id: selectedVaultId, title: 'New Chat' });
+            const newChat = await createChat({ vault_id: selectedVaultId, title: 'Новый чат' });
             handleChatChange(newChat.id);
         } catch (error: unknown) {
             const errorMessage = (
@@ -95,19 +95,19 @@ export const ChatPage = () => {
                 error !== null &&
                 ((error as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
                     (error as { message?: string }).message)
-            ) || 'Failed to create chat';
-            alert(`Error creating chat: ${errorMessage}`);
+            ) || 'Не удалось создать чат';
+            alert(`Ошибка создания чата: ${errorMessage}`);
         }
     };
 
     const sendMessageWrapper = () => {
         if (!userCurrentMessage.trim()) return;
         if (!chatId) {
-            alert('Please select or create a chat first');
+            alert('Сначала выберите или создайте чат');
             return;
         }
         if (!selectedVaultId) {
-            alert('Vault is not available. Please wait for vault to load.');
+            alert('Vault недоступен. Дождитесь загрузки.');
             return;
         }
 
@@ -156,11 +156,11 @@ export const ChatPage = () => {
     const sendDeepResearchWrapper = () => {
         if (!userCurrentMessage.trim()) return;
         if (!chatId) {
-            alert('Please select or create a chat first');
+            alert('Сначала выберите или создайте чат');
             return;
         }
         if (!selectedVaultId) {
-            alert('Vault is not available. Please wait for vault to load.');
+            alert('Vault недоступен. Дождитесь загрузки.');
             return;
         }
 
@@ -226,6 +226,9 @@ export const ChatPage = () => {
     };
 
     const availableChats = chatsData?.chats || [];
+    const activeChatTitle = chatId ? availableChats.find(c => c.id === chatId)?.title || 'Чат' : 'RAG Chat';
+    const totalTokens = isLLMTokensSuccess ? llmTokens.input_tokens + llmTokens.output_tokens : null;
+    const canSendMessage = Boolean(selectedVaultId && userCurrentMessage.trim() && chatId);
 
     return (
         <BasicLayout>
@@ -234,8 +237,11 @@ export const ChatPage = () => {
                     {/* Sidebar с чатами - Desktop */}
                     <div className="chat-sidebar">
                         <Stack gap="sm">
-                            <Group justify="space-between">
-                                <Text size="sm" fw={600}>Chats</Text>
+                            <Group justify="space-between" align="center">
+                                <div>
+                                    <Text size="xs" c="dimmed" fw={700}>Рабочая область</Text>
+                                    <Text size="sm" fw={800}>Чаты</Text>
+                                </div>
                                 <Button
                                     size="xs"
                                     variant="light"
@@ -244,7 +250,7 @@ export const ChatPage = () => {
                                     loading={isCreateChatPending}
                                     disabled={!selectedVaultId}
                                 >
-                                    New
+                                    Новый
                                 </Button>
                             </Group>
 
@@ -253,17 +259,13 @@ export const ChatPage = () => {
                                     {chatsLoading ? (
                                         <Loader size="sm" />
                                     ) : availableChats.length === 0 ? (
-                                        <Text size="sm" c="dimmed">No chats yet</Text>
+                                        <Text size="sm" c="dimmed">Чатов пока нет</Text>
                                     ) : (
                                         availableChats.map((chat) => (
                                             <Paper
                                                 key={chat.id}
                                                 p="xs"
-                                                style={{
-                                                    cursor: 'pointer',
-                                                    backgroundColor: chat.id === chatId ? 'var(--bg-primary)' : 'transparent',
-                                                    border: chat.id === chatId ? '1px solid var(--border-color)' : 'none',
-                                                }}
+                                                className={`chat-list-item ${chat.id === chatId ? 'active' : ''}`}
                                                 onClick={() => handleChatChange(chat.id)}
                                             >
                                                 <Text size="sm" truncate>{chat.title}</Text>
@@ -282,7 +284,7 @@ export const ChatPage = () => {
                     <Drawer
                         opened={chatsDrawerOpened}
                         onClose={closeChatsDrawer}
-                        title="Chats"
+                        title="Чаты"
                         position="left"
                         padding="md"
                         size="xs"
@@ -290,7 +292,7 @@ export const ChatPage = () => {
                     >
                         <Stack gap="sm">
                             <Group justify="space-between">
-                                <Text size="sm" fw={600}>Chats</Text>
+                                <Text size="sm" fw={600}>Чаты</Text>
                                 <Button
                                     size="xs"
                                     variant="light"
@@ -299,7 +301,7 @@ export const ChatPage = () => {
                                     loading={isCreateChatPending}
                                     disabled={!selectedVaultId}
                                 >
-                                    New
+                                    Новый
                                 </Button>
                             </Group>
 
@@ -308,7 +310,7 @@ export const ChatPage = () => {
                                     {chatsLoading ? (
                                         <Loader size="sm" />
                                     ) : availableChats.length === 0 ? (
-                                        <Text size="sm" c="dimmed">No chats yet</Text>
+                                        <Text size="sm" c="dimmed">Чатов пока нет</Text>
                                     ) : (
                                         availableChats.map((chat) => (
                                             <Paper
@@ -344,18 +346,18 @@ export const ChatPage = () => {
                                 variant="light"
                                 onClick={toggleChatsDrawer}
                                 size="lg"
-                                aria-label="Open chats"
+                                aria-label="Открыть чаты"
                             >
                                 <IconMenu2 size={20} />
                             </ActionIcon>
                             <Text size="sm" fw={500}>
-                                {chatId ? availableChats.find(c => c.id === chatId)?.title || 'Chat' : 'RAG Chat'}
+                                {activeChatTitle}
                             </Text>
                             <ActionIcon
                                 variant="light"
                                 onClick={toggleInfoDrawer}
                                 size="lg"
-                                aria-label="Open info"
+                                aria-label="Открыть информацию"
                             >
                                 <IconInfoHexagonFilled size={20} />
                             </ActionIcon>
@@ -363,14 +365,20 @@ export const ChatPage = () => {
 
                         {!chatId ? (
                             <div className="chat-empty-state">
-                                <Text size="lg" c="dimmed">Select a chat or create a new one</Text>
+                                <ThemeIcon size={52} radius="md" variant="light" color="blue">
+                                    <IconMessageCircle size={26} />
+                                </ThemeIcon>
+                                <div>
+                                    <Text size="lg" fw={800}>Чат не выбран</Text>
+                                    <Text size="sm" c="dimmed">Создайте диалог и задавайте вопросы по вашему synced vault.</Text>
+                                </div>
                                 <Button
                                     onClick={handleCreateChat}
                                     loading={isCreateChatPending}
                                     disabled={!selectedVaultId}
                                     leftSection={<IconPlus size={16} />}
                                 >
-                                    Create New Chat
+                                    Создать чат
                                 </Button>
                             </div>
                         ) : (
@@ -382,6 +390,22 @@ export const ChatPage = () => {
                                         className="chat-messages-area"
                                         style={{ flex: showDocumentViewer ? '0 0 60%' : 1 }}
                                     >
+                                        <div className="chat-thread-header">
+                                            <div>
+                                                <Text size="xs" c="dimmed" fw={700}>Текущий диалог</Text>
+                                                <Text fw={800}>{activeChatTitle}</Text>
+                                            </div>
+                                            <Group gap="xs">
+                                                <Badge variant="light" color={selectedVaultId ? "blue" : "gray"} leftSection={<IconDatabase size={12} />}>
+                                                    {selectedVaultId ? "Vault готов" : "Vault загружается"}
+                                                </Badge>
+                                                {totalTokens !== null && (
+                                                    <Badge variant="light" color="teal">
+                                                        {totalTokens} токенов
+                                                    </Badge>
+                                                )}
+                                            </Group>
+                                        </div>
                                         <MessageHistory 
                                             messages={messages} 
                                             isAssistantThinking={isSendMessagePending || isDeepResearchPending}
@@ -451,7 +475,7 @@ export const ChatPage = () => {
                                             minRows={1}
                                             maxRows={6}
                                             onKeyDown={handleKeyDown}
-                                            placeholder="Message..."
+                                            placeholder="Спросите что-нибудь о вашем vault..."
                                             disabled={!selectedVaultId}
                                             style={{ flex: 1 }}
                                             styles={{
@@ -466,32 +490,36 @@ export const ChatPage = () => {
                                                 }
                                             }}
                                         />
-                                        <ActionIcon
-                                            loaderProps={{ type: "oval" }}
-                                            loading={isDeepResearchPending}
-                                            size={42}
-                                            radius="md"
-                                            color="teal"
-                                            variant="light"
-                                            onClick={sendDeepResearchWrapper}
-                                            disabled={!selectedVaultId || !userCurrentMessage.trim()}
-                                            title="Deep Research (vault + sonar-deep-research)"
-                                        >
-                                            <IconSearch style={{ width: 20, height: 20 }} stroke={2} />
-                                        </ActionIcon>
-                                        <ActionIcon
-                                            loaderProps={{ type: "oval" }}
-                                            loading={isSendMessagePending}
-                                            size={42}
-                                            radius="md"
-                                            color="blue"
-                                            variant="filled"
-                                            onClick={sendMessageWrapper}
-                                            disabled={!selectedVaultId || !userCurrentMessage.trim()}
-                                            title="Отправить сообщение"
-                                        >
-                                            <IconArrowRight style={{ width: 20, height: 20 }} stroke={2} />
-                                        </ActionIcon>
+                                        <Tooltip label="Deep Research">
+                                            <ActionIcon
+                                                loaderProps={{ type: "oval" }}
+                                                loading={isDeepResearchPending}
+                                                size={42}
+                                                radius="md"
+                                                color="teal"
+                                                variant="light"
+                                                onClick={sendDeepResearchWrapper}
+                                                disabled={!canSendMessage}
+                                                title="Deep Research"
+                                            >
+                                                <IconSearch style={{ width: 20, height: 20 }} stroke={2} />
+                                            </ActionIcon>
+                                        </Tooltip>
+                                        <Tooltip label="Отправить">
+                                            <ActionIcon
+                                                loaderProps={{ type: "oval" }}
+                                                loading={isSendMessagePending}
+                                                size={42}
+                                                radius="md"
+                                                color="blue"
+                                                variant="filled"
+                                                onClick={sendMessageWrapper}
+                                                disabled={!canSendMessage}
+                                                title="Отправить"
+                                            >
+                                                <IconArrowRight style={{ width: 20, height: 20 }} stroke={2} />
+                                            </ActionIcon>
+                                        </Tooltip>
                                     </Flex>
                                 </div>
                             </>
@@ -500,31 +528,40 @@ export const ChatPage = () => {
 
                     {/* Правая панель с информацией - Desktop */}
                     <div className="chat-info-sidebar">
-                        <Accordion multiple={true} defaultValue={["General"]} variant="default">
-                            <Accordion.Item value={"General"}>
+                        <div className="chat-info-summary">
+                            <ThemeIcon size={38} radius="md" variant="light" color="blue">
+                                <IconSparkles size={20} />
+                            </ThemeIcon>
+                            <div>
+                                <Text size="sm" fw={800}>Статус RAG</Text>
+                                <Text size="xs" c="dimmed">Контекст, источники и управление</Text>
+                            </div>
+                        </div>
+                        <Accordion multiple={true} defaultValue={["general"]} variant="default">
+                            <Accordion.Item value={"general"}>
                                 <Accordion.Control icon={<IconInfoHexagonFilled size={18} />}>
-                                    <Text size="sm" fw={500}>General</Text>
+                                    <Text size="sm" fw={500}>Общее</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     <Stack gap="xs">
                                         <div>
-                                            <Text size="xs" c="dimmed">In-Tokens</Text>
+                                            <Text size="xs" c="dimmed">Входные токены</Text>
                                             <Text size="sm" fw={500}>{isLLMTokensSuccess ? llmTokens.input_tokens : "—"}</Text>
                                         </div>
                                         <div>
-                                            <Text size="xs" c="dimmed">Out-Tokens</Text>
+                                            <Text size="xs" c="dimmed">Выходные токены</Text>
                                             <Text size="sm" fw={500}>{isLLMTokensSuccess ? llmTokens.output_tokens : "—"}</Text>
                                         </div>
                                     </Stack>
                                 </Accordion.Panel>
                             </Accordion.Item>
-                            <Accordion.Item value={"Related"}>
+                            <Accordion.Item value={"related"}>
                                 <Accordion.Control icon={<IconBookmarksFilled size={18} />}>
-                                    <Text size="sm" fw={500}>Related documents</Text>
+                                    <Text size="sm" fw={500}>Связанные документы</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     {relatedDocuments.length === 0 ? (
-                                        <Text size="sm" c="dimmed">No documents</Text>
+                                        <Text size="sm" c="dimmed">Документов нет</Text>
                                     ) : (
                                         <ScrollArea scrollbars="y" h={200}>
                                             <List
@@ -544,9 +581,9 @@ export const ChatPage = () => {
                                     )}
                                 </Accordion.Panel>
                             </Accordion.Item>
-                            <Accordion.Item value={"Management"}>
+                            <Accordion.Item value={"management"}>
                                 <Accordion.Control icon={<IconSettingsFilled size={18} />}>
-                                    <Text size="sm" fw={500}>Management</Text>
+                                    <Text size="sm" fw={500}>Управление</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     <Button
@@ -558,7 +595,7 @@ export const ChatPage = () => {
                                         disabled={!chatId}
                                         fullWidth
                                     >
-                                        Clear history
+                                        Очистить историю
                                     </Button>
                                 </Accordion.Panel>
                             </Accordion.Item>
@@ -569,37 +606,37 @@ export const ChatPage = () => {
                     <Drawer
                         opened={infoDrawerOpened}
                         onClose={closeInfoDrawer}
-                        title="Info"
+                        title="Информация"
                         position="right"
                         padding="md"
                         size="xs"
                         className="mobile-info-drawer"
                     >
-                        <Accordion multiple={true} defaultValue={["General"]} variant="default">
-                            <Accordion.Item value={"General"}>
+                        <Accordion multiple={true} defaultValue={["general"]} variant="default">
+                            <Accordion.Item value={"general"}>
                                 <Accordion.Control icon={<IconInfoHexagonFilled size={18} />}>
-                                    <Text size="sm" fw={500}>General</Text>
+                                    <Text size="sm" fw={500}>Общее</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     <Stack gap="xs">
                                         <div>
-                                            <Text size="xs" c="dimmed">In-Tokens</Text>
+                                            <Text size="xs" c="dimmed">Входные токены</Text>
                                             <Text size="sm" fw={500}>{isLLMTokensSuccess ? llmTokens.input_tokens : "—"}</Text>
                                         </div>
                                         <div>
-                                            <Text size="xs" c="dimmed">Out-Tokens</Text>
+                                            <Text size="xs" c="dimmed">Выходные токены</Text>
                                             <Text size="sm" fw={500}>{isLLMTokensSuccess ? llmTokens.output_tokens : "—"}</Text>
                                         </div>
                                     </Stack>
                                 </Accordion.Panel>
                             </Accordion.Item>
-                            <Accordion.Item value={"Related"}>
+                            <Accordion.Item value={"related"}>
                                 <Accordion.Control icon={<IconBookmarksFilled size={18} />}>
-                                    <Text size="sm" fw={500}>Related documents</Text>
+                                    <Text size="sm" fw={500}>Связанные документы</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     {relatedDocuments.length === 0 ? (
-                                        <Text size="sm" c="dimmed">No documents</Text>
+                                        <Text size="sm" c="dimmed">Документов нет</Text>
                                     ) : (
                                         <ScrollArea scrollbars="y" h={200}>
                                             <List
@@ -619,9 +656,9 @@ export const ChatPage = () => {
                                     )}
                                 </Accordion.Panel>
                             </Accordion.Item>
-                            <Accordion.Item value={"Management"}>
+                            <Accordion.Item value={"management"}>
                                 <Accordion.Control icon={<IconSettingsFilled size={18} />}>
-                                    <Text size="sm" fw={500}>Management</Text>
+                                    <Text size="sm" fw={500}>Управление</Text>
                                 </Accordion.Control>
                                 <Accordion.Panel>
                                     <Button
@@ -636,7 +673,7 @@ export const ChatPage = () => {
                                         disabled={!chatId}
                                         fullWidth
                                     >
-                                        Clear history
+                                        Очистить историю
                                     </Button>
                                 </Accordion.Panel>
                             </Accordion.Item>

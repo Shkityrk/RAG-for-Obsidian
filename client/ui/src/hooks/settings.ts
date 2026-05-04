@@ -41,9 +41,9 @@ const useCheckLLM = () => {
             onError: handleAPIError,
             onSuccess: (data: LLMAvailabilityResponse) => {
                 if (data.is_available){
-                    notifySuccess("LLM is available")
+                    notifySuccess("LLM доступна")
                 } else {
-                    notifyWarning("LLM is not available with these credentials")
+                    notifyWarning("LLM недоступна с текущими параметрами")
                 }
             },
         }

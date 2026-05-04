@@ -1,16 +1,5 @@
 import { LLMSettingsRequest } from "../../types/settings";
 
-const OPENROUTER_MODEL_SUGGESTIONS: string[] = [
-    "google/gemini-3-flash-preview",
-    "openai/gpt-4o-mini",
-    "anthropic/claude-3.7-sonnet",
-];
-
-const DEEP_RESEARCH_MODEL_SUGGESTIONS: string[] = [
-    "perplexity/sonar-deep-research",
-    "perplexity/sonar-reasoning-pro",
-];
-
 const DEFAULT_LLM_SETTINGS: LLMSettingsRequest = {
     openrouter_api_key: "",
     openrouter_llm_model: "google/gemini-3-flash-preview",
@@ -27,4 +16,4 @@ const DEFAULT_LLM_SETTINGS: LLMSettingsRequest = {
     deep_research_max_tokens: 1600,
 };
 
-export { OPENROUTER_MODEL_SUGGESTIONS, DEEP_RESEARCH_MODEL_SUGGESTIONS, DEFAULT_LLM_SETTINGS };
+export { DEFAULT_LLM_SETTINGS };

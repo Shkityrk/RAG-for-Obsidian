@@ -4,15 +4,7 @@ import {IndexPage} from "../pages/index";
 import {AuthPage} from "../pages/auth";
 import {ChatPage} from "../pages/chat";
 import {SettingsPage} from "../pages/settings";
-import {isAuthenticated} from "../utils/auth";
-
-// Компонент для защиты маршрутов
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (!isAuthenticated()) {
-        return <Navigate to="/auth" replace />;
-    }
-    return <>{children}</>;
-};
+import {ProtectedRoute} from "./protected-route";
 
 const router = createBrowserRouter([
     {

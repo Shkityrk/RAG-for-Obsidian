@@ -39,11 +39,11 @@ export const useCreateChat = () => {
     mutationFn: (data: CreateChatRequest) => chatsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
-      showSuccessNotification('Chat created successfully!');
+      showSuccessNotification('Чат создан');
       // Не перенаправляем здесь - пусть компонент сам обработает
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Failed to create chat');
+      const message = getErrorMessage(error, 'Не удалось создать чат');
       showErrorNotification(message);
     },
   });
@@ -56,10 +56,10 @@ export const useUpdateChat = () => {
       chatsApi.update(chatId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
-      showSuccessNotification('Chat updated successfully!');
+      showSuccessNotification('Чат обновлен');
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Failed to update chat');
+      const message = getErrorMessage(error, 'Не удалось обновить чат');
       showErrorNotification(message);
     },
   });
@@ -71,11 +71,11 @@ export const useDeleteChat = () => {
     mutationFn: (chatId: number) => chatsApi.delete(chatId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
-      showSuccessNotification('Chat deleted successfully!');
+      showSuccessNotification('Чат удален');
       window.location.href = '/';
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Failed to delete chat');
+      const message = getErrorMessage(error, 'Не удалось удалить чат');
       showErrorNotification(message);
     },
   });

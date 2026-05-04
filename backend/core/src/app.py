@@ -30,6 +30,19 @@ from sqlalchemy import DateTime, Integer, String, Text, create_engine, or_, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.sql import quoted_name
 
+from src.core_utils import (
+    derive_chat_title_from_message as _derive_chat_title_from_message_impl,
+    extract_username_from_bearer_token,
+    legacy_stable_vault_id as _legacy_stable_vault_id_impl,
+    legacy_vault_root_from_path as _legacy_vault_root_from_path_impl,
+    parse_json_object as _parse_json_object_impl,
+    read_qdrant_vector_size as _read_qdrant_vector_size_impl,
+    split_text as _split_text_impl,
+    stable_vault_id as _stable_vault_id_impl,
+    vault_id_matches as _vault_id_matches_impl,
+    vault_root_from_path as _vault_root_from_path_impl,
+)
+
 
 logger = logging.getLogger("core")
 logging.basicConfig(level=os.getenv("CORE_LOG_LEVEL", "INFO"))
@@ -429,32 +442,15 @@ class EmbeddingsService:
 
 
 def split_text(content: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
-    normalized = content.replace("\r\n", "\n").strip()
-    if not normalized:
-        return []
-    chunks: list[str] = []
-    start = 0
-    while start < len(normalized):
-        end = min(start + chunk_size, len(normalized))
-        chunks.append(normalized[start:end])
-        if end == len(normalized):
-            break
-        start = max(0, end - overlap)
-    return chunks
+    return _split_text_impl(content, chunk_size=chunk_size, overlap=overlap)
 
 
 def _extract_username_from_token(authorization: str | None) -> str:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Authorization bearer token is required")
-    token = authorization[7:]
-    try:
-        payload = jwt.decode(token, AUTH_SECRET_KEY, algorithms=[AUTH_ALGORITHM])
-    except JWTError as exc:
-        raise HTTPException(status_code=401, detail="Invalid token") from exc
-    username = payload.get("sub")
-    if not isinstance(username, str) or not username:
-        raise HTTPException(status_code=401, detail="Token does not contain username")
-    return username
+    return extract_username_from_bearer_token(
+        authorization,
+        secret_key=AUTH_SECRET_KEY,
+        algorithm=AUTH_ALGORITHM,
+    )
 
 
 def _extract_user_id_from_token(authorization: str | None) -> int:
@@ -491,101 +487,35 @@ def _extract_user_id_from_token(authorization: str | None) -> int:
 
 
 def _vault_root_from_path(vault_path: str) -> str:
-    # In this architecture file paths are relative to a single user vault.
-    # Keep one logical vault for the whole user, regardless of file path.
-    _ = vault_path
-    return "default"
+    return _vault_root_from_path_impl(vault_path)
 
 
 def _stable_vault_id(username: str, vault_root: str) -> int:
-    digest = hashlib.sha1(f"{username}::{vault_root}".encode("utf-8")).hexdigest()
-    # Keep vault_id in signed int32 range to match existing DB schema (INTEGER).
-    return int(digest[:8], 16) & INT32_MAX
+    return _stable_vault_id_impl(username, vault_root)
 
 
 def _legacy_stable_vault_id(username: str, vault_root: str) -> int:
-    digest = hashlib.sha1(f"{username}::{vault_root}".encode("utf-8")).hexdigest()
-    return int(digest[:8], 16)
+    return _legacy_stable_vault_id_impl(username, vault_root)
 
 
 def _legacy_vault_root_from_path(vault_path: str) -> str:
-    normalized = vault_path.replace("\\", "/").strip("/")
-    if not normalized:
-        return "default"
-    return normalized.split("/")[0]
+    return _legacy_vault_root_from_path_impl(vault_path)
 
 
 def _vault_id_matches(username: str, vault_path: str, vault_id: int) -> bool:
-    current_root = _vault_root_from_path(vault_path)
-    legacy_root = _legacy_vault_root_from_path(vault_path)
-    candidates = {
-        _stable_vault_id(username, current_root),
-        _legacy_stable_vault_id(username, current_root),
-        _stable_vault_id(username, legacy_root),
-        _legacy_stable_vault_id(username, legacy_root),
-    }
-    return vault_id in candidates
+    return _vault_id_matches_impl(username, vault_path, vault_id)
 
 
 def _read_qdrant_vector_size(collection_info: Any) -> int | None:
-    try:
-        params = collection_info.config.params
-        if params is None:
-            return None
-        vectors = params.vectors
-        if vectors is None:
-            return None
-        if isinstance(vectors, dict):
-            for v in vectors.values():
-                if hasattr(v, "size"):
-                    return int(v.size)
-            return None
-        if hasattr(vectors, "size"):
-            return int(vectors.size)
-    except Exception:
-        return None
-    return None
+    return _read_qdrant_vector_size_impl(collection_info)
 
 
 def _parse_json_object(raw: str) -> dict[str, Any]:
-    if not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE)
-    if fenced:
-        try:
-            parsed = json.loads(fenced.group(1))
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            pass
-
-    start = raw.find("{")
-    end = raw.rfind("}")
-    if start >= 0 and end > start:
-        try:
-            parsed = json.loads(raw[start : end + 1])
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            pass
-
-    return {}
+    return _parse_json_object_impl(raw)
 
 
 def _derive_chat_title_from_message(message_content: str, max_chars: int = CHAT_TITLE_MAX_CHARS) -> str:
-    normalized = " ".join(message_content.split()).strip()
-    if not normalized:
-        return "New Chat"
-    if len(normalized) <= max_chars:
-        return normalized
-    return normalized[:max_chars].rstrip()
+    return _derive_chat_title_from_message_impl(message_content, max_chars=max_chars)
 
 
 class OpenRouterLLMService:

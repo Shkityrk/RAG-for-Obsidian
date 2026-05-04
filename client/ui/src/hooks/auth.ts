@@ -1,7 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { authApi, RegisterRequest, LoginRequest } from '../api/auth';
 import { saveToken, saveUserData, logout as logoutUtil } from '../utils/auth';
 import { showSuccessNotification, showErrorNotification } from '../utils/error-notifications';
+
+const getErrorDetail = (error: unknown, fallback: string) => {
+  const axiosError = error as AxiosError<{ detail?: string }>;
+  return axiosError.response?.data?.detail || fallback;
+};
 
 export const useRegister = () => {
   return useMutation({
@@ -9,11 +15,11 @@ export const useRegister = () => {
     onSuccess: (data) => {
       saveToken(data.access_token);
       saveUserData({ user_id: data.user.id, username: data.user.username });
-      showSuccessNotification('Registration successful!');
+      showSuccessNotification('Регистрация прошла успешно');
       window.location.href = '/index';
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Registration failed';
+    onError: (error: unknown) => {
+      const message = getErrorDetail(error, 'Не удалось зарегистрироваться');
       showErrorNotification(message);
     },
   });
@@ -25,11 +31,11 @@ export const useLogin = () => {
     onSuccess: (data) => {
       saveToken(data.access_token);
       saveUserData({ user_id: data.user.id, username: data.user.username });
-      showSuccessNotification('Login successful!');
+      showSuccessNotification('Вход выполнен');
       window.location.href = '/index';
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Login failed';
+    onError: (error: unknown) => {
+      const message = getErrorDetail(error, 'Не удалось войти');
       showErrorNotification(message);
     },
   });

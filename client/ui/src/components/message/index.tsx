@@ -1,5 +1,6 @@
 import {MessageSchema, FragmentInfo} from "../../types/messages"
 import Markdown from "react-markdown";
+import type { Components } from "react-markdown";
 import remarkGfm from 'remark-gfm';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter'
 import {oneDark} from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -7,13 +8,11 @@ import { Loader } from '@mantine/core';
 import { useState, useRef, useEffect } from 'react';
 import "./index.css";
 
-const MARKDOWN_STYLES = {
-    code: ({...props}: any) => {
-        const {children, className, node, ...rest} = props
+const MARKDOWN_STYLES: Components = {
+    code: ({children, className, ...rest}) => {
         const match = /language-(\w+)/.exec(className || '')
         return match ? (
           <SyntaxHighlighter
-            {...rest}
             PreTag="div"
             children={String(children).replace(/\n$/, '')}
             language={match[1]}
@@ -31,7 +30,7 @@ const MARKDOWN_STYLES = {
           </code>
         )
       },
-    img: ({...props}: any) => {
+    img: ({...props}) => {
         const {src, alt, ...rest} = props;
         return (
           <img
@@ -48,7 +47,7 @@ const MARKDOWN_STYLES = {
           />
         );
       },
-    table: ({...props}: any) => {
+    table: ({...props}) => {
         return (
           <div style={{ 
             overflowX: 'auto', 
@@ -77,13 +76,14 @@ export interface MessageProps  {
 
 
 const Message = (props: MessageProps) => {
-    const className = `message ${props.message.role}-message`
+    const { message, isLoading, fragments, onFragmentClick } = props;
+    const className = `message ${message.role}-message`
     const [selectedFragment, setSelectedFragment] = useState<FragmentInfo | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
     // Обработка выделения текста - улучшенная версия
     useEffect(() => {
-        if (props.message.role !== 'assistant' || !props.fragments || props.fragments.length === 0) {
+        if (message.role !== 'assistant' || !fragments || fragments.length === 0) {
             return;
         }
 
@@ -106,7 +106,7 @@ const Message = (props: MessageProps) => {
             let bestMatch: FragmentInfo | null = null;
             let bestScore = 0;
 
-            for (const fragment of props.fragments!) {
+            for (const fragment of fragments) {
                 const fragmentText = fragment.text.toLowerCase();
                 // Проверяем, содержит ли фрагмент выделенный текст
                 if (fragmentText.includes(searchText)) {
@@ -122,8 +122,8 @@ const Message = (props: MessageProps) => {
 
                     if (bestMatch) {
                         setSelectedFragment(bestMatch);
-                        if (props.onFragmentClick) {
-                            props.onFragmentClick(bestMatch, props.message.id);
+                        if (onFragmentClick) {
+                            onFragmentClick(bestMatch, message.id);
                         }
                     }
         };
@@ -140,48 +140,49 @@ const Message = (props: MessageProps) => {
         return () => {
             document.removeEventListener('mouseup', handleDocumentMouseUp);
         };
-    }, [props.message, props.fragments, props.onFragmentClick]);
+    }, [message, fragments, onFragmentClick]);
 
     // Показываем источники для сообщений ассистента с fragments
-    const hasFragments = props.fragments && props.fragments.length > 0 && props.message.role === 'assistant';
+    const hasFragments = fragments && fragments.length > 0 && message.role === 'assistant';
 
     return (
         <div className={className} ref={contentRef}>
             {
-              props.isLoading
+              isLoading
               ? <Loader color="blue" type="dots" size="sm"/>
               : (
                 <>
                     <Markdown 
                       remarkPlugins={[remarkGfm]} 
-                      children={props.message.content} 
+                      children={message.content}
                       className="reactMarkDown"
                       components={MARKDOWN_STYLES}
                     />
                     {hasFragments && (
                         <div className="message-sources">
-                            <span className="message-sources-label">Источники:</span>
+                            <span className="message-sources-label">Источники</span>
                             <div className="message-sources-list">
-                                {props.fragments!.map((fragment, index) => (
-                                    <span
+                                {fragments.map((fragment, index) => (
+                                    <button
                                         key={index}
+                                        type="button"
                                         className={`message-source-item ${selectedFragment?.filename === fragment.filename ? 'active' : ''}`}
                                         onClick={() => {
                                             setSelectedFragment(fragment);
-                                            if (props.onFragmentClick) {
-                                                props.onFragmentClick(fragment, props.message.id);
+                                            if (onFragmentClick) {
+                                                onFragmentClick(fragment, message.id);
                                             }
                                         }}
                                     >
                                         {fragment.filename} ({fragment.similarity.toFixed(2)})
-                                    </span>
+                                    </button>
                                 ))}
                             </div>
                         </div>
                     )}
                     {selectedFragment && (
                         <div className="fragment-hint">
-                            <strong>Выбранный источник:</strong> {selectedFragment.filename} (similarity: {selectedFragment.similarity.toFixed(2)})
+                            <strong>Выбранный источник:</strong> {selectedFragment.filename} ({selectedFragment.similarity.toFixed(2)})
                         </div>
                     )}
                 </>

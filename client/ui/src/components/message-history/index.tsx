@@ -14,7 +14,7 @@ export interface MessageHistoryProps  {
 const assistantThinkingMessage: MessageSchema = {
   id: 'thinking',
   role: 'assistant',
-  content: 'In thinking...',
+  content: 'Думаю...',
   datetime: new Date().toISOString()
 }
 

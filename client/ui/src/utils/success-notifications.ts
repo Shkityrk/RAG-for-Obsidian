@@ -1,7 +1,7 @@
 import { notifications } from '@mantine/notifications';
 
 
-const notifySuccess = (text: string, title: string = "Success") => {
+const notifySuccess = (text: string, title: string = "Успешно") => {
     notifications.show({
         color: "green",
         title: title,
