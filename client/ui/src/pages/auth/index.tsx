@@ -5,12 +5,16 @@ import { isAuthenticated } from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
 
+const EMAIL_REGEXP = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEXP = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
 export const AuthPage = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [registerErrors, setRegisterErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   
   const { mutate: login, isPending: isLoginPending } = useLogin();
@@ -28,7 +32,19 @@ export const AuthPage = () => {
   };
 
   const handleRegister = () => {
-    if (!firstName || !lastName || !email || !username || !password) return;
+    const nextErrors: { email?: string; password?: string } = {};
+
+    if (!EMAIL_REGEXP.test(email.trim())) {
+      nextErrors.email = 'Введите корректный email.';
+    }
+
+    if (!PASSWORD_REGEXP.test(password)) {
+      nextErrors.password = 'Пароль должен быть не короче 8 символов и содержать буквы и цифры.';
+    }
+
+    setRegisterErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0 || !firstName || !lastName || !email || !username || !password) return;
+
     register({
       first_name: firstName,
       last_name: lastName,
@@ -98,7 +114,13 @@ export const AuthPage = () => {
                   placeholder="your@email.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  error={registerErrors.email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (registerErrors.email) {
+                      setRegisterErrors((prev) => ({ ...prev, email: undefined }));
+                    }
+                  }}
                 />
                 <TextInput
                   label="Имя пользователя"
@@ -112,7 +134,14 @@ export const AuthPage = () => {
                   placeholder="Ваш пароль"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  error={registerErrors.password}
+                  description="Минимум 8 символов, обязательно буквы и цифры."
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (registerErrors.password) {
+                      setRegisterErrors((prev) => ({ ...prev, password: undefined }));
+                    }
+                  }}
                 />
                 <Button
                   fullWidth
