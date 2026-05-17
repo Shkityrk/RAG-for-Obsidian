@@ -1,0 +1,53 @@
+# Production overrides for a small VPS (1 vCPU / 2 GB RAM).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml ...
+
+services:
+  db:
+    ports: []
+    mem_limit: 384m
+
+  minio:
+    ports: []
+    mem_limit: 256m
+
+  qdrant:
+    ports: []
+    mem_limit: 384m
+
+  auth:
+    ports: []
+    mem_limit: 192m
+
+  file_core:
+    ports: []
+    mem_limit: 192m
+
+  core:
+    ports: []
+    mem_limit: 512m
+    environment:
+      EMBED_BATCH_SIZE: "16"
+      CORE_MAX_NEW_FILE_WORKERS: "2"
+      CORE_DB_BATCH_SIZE: "25"
+
+  gateway:
+    ports: []
+    mem_limit: 192m
+
+  ui:
+    build:
+      args:
+        VITE_APPLICATION_MODE: prod
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost}
+    mem_limit: 768m
+
+  nginx:
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./client/ui/dist:/usr/share/nginx/html:ro
+    mem_limit: 64m
+    depends_on:
+      - gateway
+      - core
