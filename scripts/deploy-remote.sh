@@ -8,12 +8,20 @@ SKIP_UI_BUILD="${SKIP_UI_BUILD:-false}"
 BUILD_UI_ON_SERVER="${BUILD_UI_ON_SERVER:-false}"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
+has_frontend_dist() {
+  [[ -f client/ui/dist/index.html ]]
+}
+
 cd "${DEPLOY_PATH}"
 
 if [[ ! -f environment/.env ]]; then
   echo "Missing ${DEPLOY_PATH}/environment/.env"
   echo "Copy deploy/env.example to environment/.env and fill secrets first."
   exit 1
+fi
+
+if ! has_frontend_dist; then
+  echo "WARN: dist missing before git pull"
 fi
 
 git fetch origin "${DEPLOY_BRANCH}"
@@ -26,10 +34,6 @@ build_ui_on_server() {
   export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1536}"
   ${COMPOSE} --profile ui-build build ui
   ${COMPOSE} --profile ui-build run --rm -e NODE_OPTIONS="${NODE_OPTIONS}" ui npm run build
-}
-
-has_frontend_dist() {
-  [[ -f client/ui/dist/index.html ]]
 }
 
 if [[ "${BUILD_UI_ON_SERVER}" == "true" ]]; then

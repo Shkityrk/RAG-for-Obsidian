@@ -15,17 +15,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_APP_URL: ${{ secrets.DEPLOY_APP_URL }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Validate required secrets
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_APP_URL: ${{ secrets.DEPLOY_APP_URL }}
         run: |
           missing=0
           for name in SSH_HOST SSH_USER SSH_PRIVATE_KEY DEPLOY_PATH DEPLOY_APP_URL; do
@@ -50,30 +52,29 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.DEPLOY_APP_URL }}
         run: npm ci && npm run build
 
-      - name: Upload frontend dist
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: "client/ui/dist"
-          target: ${{ secrets.DEPLOY_PATH }}/client/ui
-          overwrite: true
-          rm: true
+      - name: Check local dist
+        run: |
+          test -f client/ui/dist/index.html
+          ls -la client/ui/dist | head -20
 
-      - name: Verify frontend dist on server
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          script: |
-            set -euo pipefail
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            test -f "${DEPLOY_PATH}/client/ui/dist/index.html"
-            echo "OK: dist/index.html exists on server"
+      - name: Upload frontend dist to server
+        run: |
+          set -euxo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          SSH_OPTS=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "${SSH_PORT}")
+          REMOTE="${SSH_USER}@${SSH_HOST}"
+
+          ssh "${SSH_OPTS[@]}" "${REMOTE}" \
+            "mkdir -p '${DEPLOY_PATH}/client/ui' && rm -rf '${DEPLOY_PATH}/client/ui/dist'"
+
+          scp -r "${SSH_OPTS[@]}" client/ui/dist "${REMOTE}:${DEPLOY_PATH}/client/ui/"
+
+          ssh "${SSH_OPTS[@]}" "${REMOTE}" \
+            "ls -la '${DEPLOY_PATH}/client/ui/dist/index.html'"
+
+          rm -f ~/.ssh/deploy_key
 
       - name: Deploy backend services
         uses: appleboy/ssh-action@v1.2.2
@@ -83,10 +84,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 45m
+          debug: true
           script: |
-            set -euo pipefail
+            set -euxo pipefail
             export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
             export DEPLOY_APP_URL="${{ secrets.DEPLOY_APP_URL }}"
             export DEPLOY_BRANCH="${{ github.ref_name }}"
             export SKIP_UI_BUILD="true"
+
+            echo "=== Pre-deploy checks ==="
+            ls -la "${DEPLOY_PATH}" || true
+            ls -la "${DEPLOY_PATH}/client/ui/dist/index.html"
+
             bash "${DEPLOY_PATH}/scripts/deploy-remote.sh"
