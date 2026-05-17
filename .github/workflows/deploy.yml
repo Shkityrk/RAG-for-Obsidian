@@ -63,13 +63,17 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          SSH_OPTS=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "${SSH_PORT}")
           REMOTE="${SSH_USER}@${SSH_HOST}"
+          # ssh uses -p for port; scp uses -P (lowercase -p means "preserve times")
+          SSH_OPTS=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -p "${SSH_PORT}")
+          SCP_OPTS=(-i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -P "${SSH_PORT}")
+
+          test -f client/ui/dist/index.html
 
           ssh "${SSH_OPTS[@]}" "${REMOTE}" \
             "mkdir -p '${DEPLOY_PATH}/client/ui' && rm -rf '${DEPLOY_PATH}/client/ui/dist'"
 
-          scp -r "${SSH_OPTS[@]}" client/ui/dist "${REMOTE}:${DEPLOY_PATH}/client/ui/"
+          scp -r "${SCP_OPTS[@]}" client/ui/dist "${REMOTE}:${DEPLOY_PATH}/client/ui/"
 
           ssh "${SSH_OPTS[@]}" "${REMOTE}" \
             "ls -la '${DEPLOY_PATH}/client/ui/dist/index.html'"
