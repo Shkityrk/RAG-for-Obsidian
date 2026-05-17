@@ -34,7 +34,9 @@ services:
     ports: []
     mem_limit: 192m
 
+  # UI собирается в GitHub Actions (на VPS 2 GB не хватает RAM для vite build).
   ui:
+    profiles: ["ui-build"]
     build:
       args:
         VITE_APPLICATION_MODE: prod
