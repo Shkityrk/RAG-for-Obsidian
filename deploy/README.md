@@ -93,13 +93,32 @@ git clone git@github.com:YOUR_USER/RAG-for-Obsidian.git /opt/rag-for-obsidian
 
 ## 5. Первый и последующие деплои
 
-Первый раз на сервере:
+**Frontend собирается в GitHub Actions**, не на VPS (на 2 GB RAM vite падает с `heap out of memory`).
+
+Первый раз после настройки Secrets — push в `main` или **Actions → Deploy to server → Run workflow**.
+
+Ручной деплой только бэкенда (если `dist` уже на сервере):
 
 ```bash
+export SKIP_UI_BUILD=true
+export DEPLOY_APP_URL=http://ВАШ_IP
 sudo -u deploy bash /opt/rag-for-Obsidian/scripts/deploy-remote.sh
 ```
 
-Дальше — push в `main` или **Actions → Deploy to server → Run workflow**.
+### OOM при сборке UI на сервере
+
+Соберите UI на ПК и залейте `dist`:
+
+```powershell
+cd D:\Projects\RAG-for-Obsidian
+.\scripts\build-and-upload-ui.ps1 -ServerIp "ВАШ_IP" -AppUrl "http://ВАШ_IP"
+```
+
+Затем на сервере:
+
+```bash
+SKIP_UI_BUILD=true DEPLOY_APP_URL=http://ВАШ_IP bash /opt/rag-for-Obsidian/scripts/deploy-remote.sh
+```
 
 ## Ограничения VPS 1 CPU / 2 GB
 
