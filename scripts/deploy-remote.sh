@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEPLOY_PATH="${DEPLOY_PATH:-/opt/rag-for-obsidian}"
+DEPLOY_PATH="${DEPLOY_PATH:-/opt/RAG-for-Obsidian}"
 DEPLOY_APP_URL="${DEPLOY_APP_URL:-http://localhost}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"

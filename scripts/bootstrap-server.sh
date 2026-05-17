@@ -4,7 +4,7 @@
 set -euo pipefail
 
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
-DEPLOY_PATH="${DEPLOY_PATH:-/opt/rag-for-obsidian}"
+DEPLOY_PATH="${DEPLOY_PATH:-/opt/RAG-for-Obsidian}"
 REPO_URL="${REPO_URL:-}"
 
 if [[ "${EUID}" -ne 0 ]]; then
