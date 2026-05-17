@@ -25,24 +25,24 @@ build_ui_on_server() {
   echo "Building frontend on server (needs ~1.5 GB free RAM + swap)..."
   export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1536}"
   ${COMPOSE} --profile ui-build build ui
-  ${COMPOSE} --profile ui-build run --rm ui npm run build
+  ${COMPOSE} --profile ui-build run --rm -e NODE_OPTIONS="${NODE_OPTIONS}" ui npm run build
+}
+
+has_frontend_dist() {
+  [[ -f client/ui/dist/index.html ]]
 }
 
 if [[ "${BUILD_UI_ON_SERVER}" == "true" ]]; then
   build_ui_on_server
-elif [[ "${SKIP_UI_BUILD}" != "true" ]]; then
-  if [[ -f client/ui/dist/index.html ]]; then
-    echo "Using existing client/ui/dist (skip rebuild)."
-  else
-    build_ui_on_server
-  fi
+elif has_frontend_dist; then
+  echo "Frontend: using existing client/ui/dist (skip server build)."
+elif [[ "${SKIP_UI_BUILD}" == "true" ]]; then
+  echo "ERROR: SKIP_UI_BUILD=true but client/ui/dist/index.html is missing."
+  echo "Run GitHub Actions deploy (builds UI in CI) or upload dist manually."
+  exit 1
 else
-  if [[ ! -f client/ui/dist/index.html ]]; then
-    echo "Missing client/ui/dist/index.html"
-    echo "Build UI in GitHub Actions or locally, then upload dist to the server."
-    exit 1
-  fi
-  echo "SKIP_UI_BUILD=true — using uploaded client/ui/dist"
+  echo "WARN: No dist found — trying server build (may OOM on 2 GB VPS)."
+  build_ui_on_server
 fi
 
 echo "Building and starting services..."

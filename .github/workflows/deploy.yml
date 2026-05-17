@@ -50,7 +50,19 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.DEPLOY_APP_URL }}
         run: npm ci && npm run build
 
-      - name: Prepare dist directory on server
+      - name: Upload frontend dist
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "client/ui/dist"
+          target: ${{ secrets.DEPLOY_PATH }}/client/ui
+          overwrite: true
+          rm: true
+
+      - name: Verify frontend dist on server
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -60,20 +72,8 @@ jobs:
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            mkdir -p "${DEPLOY_PATH}/client/ui/dist"
-            rm -rf "${DEPLOY_PATH}/client/ui/dist/"*
-            chown -R "${USER}:${USER}" "${DEPLOY_PATH}/client/ui/dist" || true
-
-      - name: Upload frontend dist
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: "client/ui/dist/*"
-          target: ${{ secrets.DEPLOY_PATH }}/client/ui/dist/
-          overwrite: true
+            test -f "${DEPLOY_PATH}/client/ui/dist/index.html"
+            echo "OK: dist/index.html exists on server"
 
       - name: Deploy backend services
         uses: appleboy/ssh-action@v1.2.2
